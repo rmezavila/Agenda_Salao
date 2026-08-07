@@ -106,12 +106,7 @@ with aba2:
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
-        
-        col_valor, col_custo = st.columns(2)
-        with col_valor:
-            valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
-        with col_custo:
-            custo = st.number_input("📦 Custo (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
+        valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -133,7 +128,6 @@ with aba2:
                     "cliente": nome_cliente,
                     "servico": servico_nome,
                     "valor": round(valor, 2),
-                    "custo": round(custo, 2),
                     "data_hora": data_hora_str,
                     "data": data_str,
                     "status": status
@@ -143,7 +137,6 @@ with aba2:
 👤 Cliente: {nome_cliente}
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
-📦 Custo: R$ {custo:.2f}
 📅 Data: {data_hora_str}
 📌 Status: {status}""")
             else:
@@ -189,7 +182,7 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO + CONSULTA DE CLIENTES POR PERÍODO =====
+# ===== ABA 4: RELATÓRIO + CONSULTA DE CLIENTES =====
 with aba4:
     st.subheader("📊 Relatório e Consultas")
     st.divider()
@@ -206,6 +199,13 @@ with aba4:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
 
+        def data_entre(data_ag, d_ini, d_fim):
+            try:
+                dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
+                return d_ini <= dt_ag <= d_fim
+            except:
+                return False
+
         # 📋 CONSULTA DE CLIENTES ATENDIDOS POR PERÍODO
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
@@ -214,24 +214,16 @@ with aba4:
         with col_dt_fim:
             data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY", key="consulta_fim")
 
-        def data_entre(data_ag, d_ini, d_fim):
-            try:
-                dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
-                return d_ini <= dt_ag <= d_fim
-            except:
-                return False
-
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
 
-        # Filtra só os REALIZADOS no período
+        # ✅ SÓ APARECE OS REALIZADOS — NÃO REALIZADO FICA FORA!
         realizados = [a for a in agendamentos 
                      if a.get("status") == "✅ Realizado" 
                      and data_entre(pegar_data(a), dt_ini_cons, dt_fim_cons)]
 
         if realizados:
             st.success(f"✅ {len(realizados)} atendimentos realizados no período")
-            # Lista de clientes únicos
             clientes_atendidos = sorted(list(set([a["cliente"] for a in realizados])))
             st.markdown("### 👥 Clientes atendidos:")
             for nome in clientes_atendidos:
@@ -240,25 +232,15 @@ with aba4:
             
             st.divider()
             st.markdown("### 📋 Atendimentos Detalhados:")
-            tabela_realizados = []
-            for item in realizados:
-                tabela_realizados.append({
-                    "Data": pegar_data(item),
-                    "Cliente": item["cliente"],
-                    "Serviço": item["servico"],
-                    "Valor R$": f"{item['valor']:.2f}",
-                    "Custo R$": f"{item.get('custo', 0):.2f}"
-                })
-            st.table(tabela_realizados)
+            st.table(realizados)
 
             total_valor = sum([a["valor"] for a in realizados])
-            total_custo = sum([a.get("custo", 0) for a in realizados])
-            st.markdown(f"### 💰 Total Período: R$ {total_valor:.2f} | 📦 Custo Total: R$ {total_custo:.2f} | 🧾 Lucro: R$ {(total_valor - total_custo):.2f}")
+            st.markdown(f"### 💰 Total do Período: R$ {total_valor:.2f}")
         else:
             st.info("Nenhum serviço realizado no período selecionado.")
 
         st.divider()
-        st.subheader("📄 Relatório Financeiro Completo")
+        st.subheader("📄 Relatório Financeiro")
 
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
@@ -266,7 +248,7 @@ with aba4:
         with col_data_fim:
             data_final = st.date_input("Data Final", format="DD/MM/YYYY", key="rel_fim")
 
-        filtro_status = st.selectbox("Filtrar por Status", ["Todos", "✅ Realizado", "Agendado", "❌ Não Realizado"])
+        filtro_status = st.selectbox("Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
 
         data_ini_str = data_inicial.strftime("%d/%m/%Y")
         data_fim_str = data_final.strftime("%d/%m/%Y")
@@ -276,11 +258,13 @@ with aba4:
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
+        # ✅ NÃO REALIZADO NUNCA APARECE NO RELATÓRIO FINANCEIRO
+        lista_filtrada = [a for a in lista_filtrada if a.get("status") != "❌ Não Realizado"]
+
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
         total_valor = sum([a["valor"] for a in lista_filtrada])
-        total_custo = sum([a.get("custo", 0) for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
@@ -308,8 +292,7 @@ with aba4:
                 "Cliente": item["cliente"],
                 "Serviço": item["servico"],
                 "Status": item.get("status", "Agendado"),
-                "Valor R$": f"{item['valor']:.2f}",
-                "Custo R$": f"{item.get('custo', 0):.2f}"
+                "Valor R$": f"{item['valor']:.2f}"
             })
 
         st.table(tabela_dados)
@@ -317,9 +300,7 @@ with aba4:
         st.divider()
 
         st.markdown(f"""
-        <h3 style='text-align: right; padding-right: 20px;'>
-        Valor: R$ {total_valor:.2f} | Custo: R$ {total_custo:.2f} | LUCRO: R$ {(total_valor - total_custo):.2f}
-        </h3>
+        <h3 style='text-align: right; padding-right: 20px;'>TOTAL GERAL: R$ {total_valor:.2f}</h3>
         """, unsafe_allow_html=True)
 
         st.divider()
