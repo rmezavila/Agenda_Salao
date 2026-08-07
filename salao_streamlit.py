@@ -158,7 +158,7 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO FINANCEIRO — SEM HTML NA TELA =====
+# ===== ABA 4: RELATÓRIO — BONITO NO CELULAR E COMPUTADOR =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -202,51 +202,53 @@ with aba4:
 
         st.divider()
 
-        # ✅ RELATÓRIO EM TEXTO BEM ALINHADO — SEM CÓDIGO NA TELA!
-        st.markdown("# 📄 SALÃO DE BELEZA")
-        st.markdown("### Relatório de Movimento Financeiro")
+        # ✅ CABEÇALHO DO RELATÓRIO
+        st.markdown("""
+        <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO DE BELEZA</h2>
+        <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
+        """, unsafe_allow_html=True)
+
         st.divider()
 
         st.markdown(f"**Período:** {data_ini_str} a {data_fim_str}")
         st.markdown(f"**Data de Emissão:** {datetime.now().strftime('%d/%m/%Y')}")
-        st.divider()
-
-        # Cabeçalho das colunas
-        col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
-        with col1: st.markdown("**Data**")
-        with col2: st.markdown("**Cliente**")
-        with col3: st.markdown("**Serviço**")
-        with col4: st.markdown("**Valor R$**")
+        st.markdown(f"**Total de Registros:** {qtd_servicos}")
 
         st.divider()
 
-        # Listagem dos itens
+        # ✅ TABELA — USANDO st.table() que FUNCIONA BEM NO CELULAR!
+        st.subheader("📋 Detalhamento")
+
+        # Prepara os dados em formato de tabela
+        tabela_dados = []
         for item in lista_filtrada:
-            d = pegar_data(item)
-            c = item['cliente']
-            s = item['servico']
-            v = f"{item['valor']:.2f}"
-            col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
-            with col1: st.write(d)
-            with col2: st.write(c)
-            with col3: st.write(s)
-            with col4: st.write(v)
+            tabela_dados.append({
+                "Data": pegar_data(item),
+                "Cliente": item["cliente"],
+                "Serviço": item["servico"],
+                "Valor R$": f"{item['valor']:.2f}"
+            })
+
+        # ✅ st.table() = se adapta sozinho no celular!
+        st.table(tabela_dados)
 
         st.divider()
 
-        # Total Geral
-        col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
-        with col3: st.markdown("### **TOTAL GERAL**")
-        with col4: st.markdown(f"### **R$ {total_valor:.2f}**")
+        # ✅ TOTAL GERAL em destaque
+        st.markdown(f"""
+        <h3 style='text-align: right; padding-right: 20px;'>TOTAL GERAL: R$ {total_valor:.2f}</h3>
+        """, unsafe_allow_html=True)
 
         st.divider()
 
-        # Linha de assinatura
+        # ✅ Linha de assinatura
         st.markdown("&nbsp;")
         st.markdown("&nbsp;")
-        col_assin = st.columns([5, 3])
-        with col_assin[1]:
-            st.markdown("___________________________")
-            st.markdown("**Responsável**")
+        st.markdown("""
+        <p style='text-align: right; padding-right: 40px; margin-top: 60px;'>
+        ___________________________<br>
+        <strong>Responsável</strong>
+        </p>
+        """, unsafe_allow_html=True)
 
-        st.info("💡 Para imprimir: aperte **Ctrl + P**")
+        st.info("💡 Para imprimir: aperte **Ctrl + P** ou toque em ⋮ → Imprimir no celular")
