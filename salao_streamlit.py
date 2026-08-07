@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.image("logo.jpg", width=400)
+st.image("logo.jpg", width=150)
 
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
@@ -112,6 +112,10 @@ with aba2:
             data = st.date_input("Data", format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("Hora")
+
+        # ✅ CAMPO NOVO: Status do Agendamento
+        status = st.selectbox("Status", ["Agendado", "✅ Realizado"])
+
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
         if confirmar:
             if cliente_sel and servico_nome and valor > 0:
@@ -125,42 +129,58 @@ with aba2:
                     "valor": round(valor, 2),
                     "data_hora": data_hora_str,
                     "data": data_str,
-                    "status": "Agendado"
+                    "status": status  # ← SALVA O STATUS
                 })
                 salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
                 st.success(f"""✅ Agendamento confirmado!
 👤 Cliente: {nome_cliente}
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
-📅 Data: {data_hora_str}""")
+📅 Data: {data_hora_str}
+📌 Status: {status}""")
             else:
                 st.warning("⚠️ Preencha todos os campos e digite o valor!")
 
-# ===== ABA 3: Agendamentos + EXCLUIR =====
+# ===== ABA 3: Agendamentos + EXCLUIR + ALTERAR STATUS =====
 with aba3:
     st.subheader("📖 Agendamentos Realizados")
     st.divider()
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
+
     if agendamentos:
         lista_agendamentos = [
-            f"{a['data_hora']} | {a['cliente']} | {a['servico']} | R$ {a['valor']:.2f}"
+            f"{a['data_hora']} | {a['cliente']} | {a['servico']} | {a.get('status', 'Agendado')}"
             for a in agendamentos
         ]
-        escolha_ag = st.selectbox("Selecione para EXCLUIR", [""] + lista_agendamentos)
+        escolha_ag = st.selectbox("Selecione para Alterar Status ou Excluir", [""] + lista_agendamentos)
+
         if escolha_ag:
             indice = lista_agendamentos.index(escolha_ag)
-            if st.button("🗑️ Excluir Este Agendamento", type="secondary"):
-                agendamentos.pop(indice)
-                salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
-                st.warning("⚠️ Agendamento excluído!")
-                st.rerun()
+            status_atual = agendamentos[indice].get("status", "Agendado")
+
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                novo_status = st.selectbox("Alterar Status", ["Agendado", "✅ Realizado"], 
+                                          index=0 if status_atual == "Agendado" else 1)
+                if st.button("💾 Salvar Status", type="primary"):
+                    agendamentos[indice]["status"] = novo_status
+                    salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
+                    st.success(f"✅ Status alterado para: {novo_status}")
+                    st.rerun()
+            with col_btn2:
+                if st.button("🗑️ Excluir", type="secondary"):
+                    agendamentos.pop(indice)
+                    salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
+                    st.warning("⚠️ Agendamento excluído!")
+                    st.rerun()
+
         st.divider()
         st.subheader("Lista Completa")
         st.table(agendamentos)
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO — BONITO NO CELULAR E COMPUTADOR =====
+# ===== ABA 4: RELATÓRIO — FILTRA POR STATUS =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -184,6 +204,9 @@ with aba4:
         with col_data_fim:
             data_final = st.date_input("Data Final", format="DD/MM/YYYY")
 
+        # ✅ FILTRO POR STATUS
+        filtro_status = st.selectbox("Filtrar por Status", ["Todos", "✅ Realizado", "Agendado"])
+
         data_ini_str = data_inicial.strftime("%d/%m/%Y")
         data_fim_str = data_final.strftime("%d/%m/%Y")
 
@@ -199,51 +222,51 @@ with aba4:
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
+        # ✅ APLICA FILTRO DE STATUS
+        if filtro_status != "Todos":
+            lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
+
         total_valor = sum([a["valor"] for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
 
-        # ✅ CABEÇALHO DO RELATÓRIO
         st.markdown("""
-        <h2 style='text-align: center; margin-bottom: 5px;'>💄 Abelhinha</h2>
+        <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO ABELHINHA</h2>
         <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
         """, unsafe_allow_html=True)
 
         st.divider()
 
         st.markdown(f"**Período:** {data_ini_str} a {data_fim_str}")
+        st.markdown(f"**Filtro:** {filtro_status}")
         st.markdown(f"**Data de Emissão:** {datetime.now().strftime('%d/%m/%Y')}")
         st.markdown(f"**Total de Registros:** {qtd_servicos}")
 
         st.divider()
 
-        # ✅ TABELA — USANDO st.table() que FUNCIONA BEM NO CELULAR!
         st.subheader("📋 Detalhamento")
 
-        # Prepara os dados em formato de tabela
         tabela_dados = []
         for item in lista_filtrada:
             tabela_dados.append({
                 "Data": pegar_data(item),
                 "Cliente": item["cliente"],
                 "Serviço": item["servico"],
+                "Status": item.get("status", "Agendado"),
                 "Valor R$": f"{item['valor']:.2f}"
             })
 
-        # ✅ st.table() = se adapta sozinho no celular!
         st.table(tabela_dados)
 
         st.divider()
 
-        # ✅ TOTAL GERAL em destaque
         st.markdown(f"""
         <h3 style='text-align: right; padding-right: 20px;'>TOTAL GERAL: R$ {total_valor:.2f}</h3>
         """, unsafe_allow_html=True)
 
         st.divider()
 
-        # ✅ Linha de assinatura
         st.markdown("&nbsp;")
         st.markdown("&nbsp;")
         st.markdown("""
@@ -253,4 +276,4 @@ with aba4:
         </p>
         """, unsafe_allow_html=True)
 
-        st.info("💡 Para imprimir: aperte **Ctrl + P** ou toque em ⋮ → Imprimir no celular")
+        st.info("💡 Para imprimir: aperte **Ctrl + P**")
