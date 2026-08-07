@@ -3,16 +3,33 @@ import json
 from datetime import datetime
 import os
 
-# ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
-hoje = datetime.today().date()
-
-# Configuração da página
+# ==============================================
+# 🔒 CONTROLE DE ACESSO POR SENHA
+# ==============================================
 st.set_page_config(
     page_title="Salão Abelhinha",
     page_icon="🐝",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+st.title("🔒 Acesso Restrito")
+senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
+
+# ✅ ALTERE AQUI PARA BLOQUEAR/LIBERAR
+# Para bloquear: troca a senha por qualquer valor novo
+# Para liberar: volta a senha para o valor que quer usar
+SENHA_CORRETA = "1234"
+
+if senha_digitada != SENHA_CORRETA:
+    st.warning("⚠️ Senha incorreta. Acesso bloqueado.")
+    st.stop()  # ❌ Para o sistema inteiro se a senha estiver errada
+
+st.success("✅ Acesso liberado!")
+st.divider()
+
+# ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
+hoje = datetime.today().date()
 
 # ---------- MENU LATERAL ----------
 st.sidebar.image("logo.jpg", width=400)
@@ -108,7 +125,6 @@ if pagina == "👥 Clientes":
 
 # ---------- PÁGINA 2: AGENDAR ----------
 elif pagina == "📅 Agendar":
-    # ✅ TÍTULO COM DATA DE HOJE EM TEMPO REAL
     data_texto = hoje.strftime("%d/%m/%Y")
     st.markdown(f"# 📅 Novo Agendamento — Hoje: {data_texto}")
     st.divider()
@@ -125,7 +141,6 @@ elif pagina == "📅 Agendar":
 
         col1, col2 = st.columns(2)
         with col1:
-            # ✅ CALENDÁRIO SEMPRE ABRINDO NA DATA DE HOJE
             data = st.date_input("📅 Data do Agendamento", value=hoje, format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("⏰ Hora")
