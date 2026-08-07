@@ -71,7 +71,6 @@ with aba1:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
-        # ✅ NOME DIFERENTE AQUI
         escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes)
 
         if escolha:
@@ -111,7 +110,6 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    # ✅ NOME DIFERENTE AQUI
     cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes)
 
     servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
@@ -132,6 +130,7 @@ with aba2:
         hora = st.time_input("Hora")
 
     data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
+    data_str = data.strftime("%d/%m/%Y")
 
     if st.button("✅ Confirmar Agendamento", type="primary"):
         if cliente_sel and servico_nome and valor > 0:
@@ -142,7 +141,7 @@ with aba2:
                 "servico": servico_nome,
                 "valor": round(valor, 2),
                 "data_hora": data_hora_str,
-                "data": data.strftime("%d/%m/%Y"),
+                "data": data_str,
                 "status": "Agendado"
             })
             salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
@@ -175,14 +174,22 @@ with aba4:
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
-        datas_disponiveis = sorted(list(set([a["data"] for a in agendamentos])), reverse=True)
+        # ✅ CORREÇÃO: usa "data_hora" se o campo "data" não existir
+        def pegar_data(agendamento):
+            if "data" in agendamento:
+                return agendamento["data"]
+            elif "data_hora" in agendamento:
+                return agendamento["data_hora"].split(" ")[0]
+            return "Sem data"
+
+        datas_disponiveis = sorted(list(set([pegar_data(a) for a in agendamentos])), reverse=True)
         filtro_data = st.selectbox("Filtrar por Data", ["Todas"] + datas_disponiveis)
 
         if filtro_data == "Todas":
             lista_filtrada = agendamentos
             st.info(f"Período: TODAS as datas ({len(agendamentos)} agendamentos)")
         else:
-            lista_filtrada = [a for a in agendamentos if a["data"] == filtro_data]
+            lista_filtrada = [a for a in agendamentos if pegar_data(a) == filtro_data]
             st.info(f"Data: {filtro_data} ({len(lista_filtrada)} agendamentos)")
 
         total_valor = sum([a["valor"] for a in lista_filtrada])
