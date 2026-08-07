@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # ---------- MENU LATERAL ----------
-st.sidebar.image("logo.jpg", width=150)
+st.sidebar.image("logo.jpg", width=400)
 st.sidebar.title("💄 Salão Abelhinha")
 st.sidebar.divider()
 
