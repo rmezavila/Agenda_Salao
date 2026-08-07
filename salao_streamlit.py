@@ -113,7 +113,10 @@ elif pagina == "📅 Agendar":
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
-        valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
+        
+        # Pega valor automático do serviço, permite alterar
+        valor_padrao = SERVICOS_PADRAO[servico_nome]
+        valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=valor_padrao, step=5.0, format="%.2f")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -127,13 +130,14 @@ elif pagina == "📅 Agendar":
         if confirmar:
             if cliente_sel and servico_nome and valor > 0:
                 nome_cliente = cliente_sel.split(" — ")[0]
+                valor_arredondado = round(valor, 2)
                 data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
                 data_str = data.strftime("%d/%m/%Y")
                 agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
                 agendamentos.append({
                     "cliente": nome_cliente,
                     "servico": servico_nome,
-                    "valor": round(valor, 2),
+                    "valor": valor_arredondado,
                     "data_hora": data_hora_str,
                     "data": data_str,
                     "status": status
@@ -142,7 +146,7 @@ elif pagina == "📅 Agendar":
                 st.success(f"""✅ Agendamento confirmado!
 👤 Cliente: {nome_cliente}
 💇 Serviço: {servico_nome}
-💰 Valor: R$ {valor:.2f}
+💰 Valor: R$ {valor_arredondado:.2f}
 📅 Data: {data_hora_str}
 📌 Status: {status}""")
             else:
@@ -185,7 +189,19 @@ elif pagina == "📖 Agendamentos":
 
         st.divider()
         st.subheader("Lista Completa")
-        st.table(agendamentos)
+        
+        # ✅ TABELA COM VALOR JÁ FORMATADO — sem zeros a mais!
+        tabela_exibicao = []
+        for a in agendamentos:
+            tabela_exibicao.append({
+                "cliente": a["cliente"],
+                "servico": a["servico"],
+                "valor": f"R$ {a['valor']:.2f}",  # ← AQUI FORMATAMOS COM 2 CASAS
+                "data_hora": a["data_hora"],
+                "data": a["data"],
+                "status": a.get("status", "Agendado")
+            })
+        st.table(tabela_exibicao)
     else:
         st.info("Nenhum agendamento registrado.")
 
@@ -213,7 +229,7 @@ elif pagina == "📊 Relatório e Consultas":
             except:
                 return False
 
-        # 📋 CONSULTA DE CLIENTES ATENDIDOS
+        # 📋 CONSULTA DE CLIENTES ATENDIDOS POR PERÍODO
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
@@ -297,7 +313,7 @@ elif pagina == "📊 Relatório e Consultas":
                 "Cliente": item["cliente"],
                 "Serviço": item["servico"],
                 "Status": item.get("status", "Agendado"),
-                "Valor (R$)": f"{item['valor']:.2f}"
+                "Valor (R$)": f"R$ {item['valor']:.2f}"
             })
 
         st.table(tabela_dados)
