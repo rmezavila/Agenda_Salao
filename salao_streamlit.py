@@ -7,11 +7,26 @@ import os
 st.set_page_config(
     page_title="Salão Abelhinha",
     page_icon="🐝",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"  # Menu já aparece aberto
 )
 
-st.image("logo.jpg", width=400)
+# ---------- MENU LATERAL ----------
+st.sidebar.image("logo.jpg", width=150)
+st.sidebar.title("💄 Salão Abelhinha")
+st.sidebar.divider()
 
+# Botões de navegação na lateral
+pagina = st.sidebar.radio(
+    "📂 Navegação",
+    ["👥 Clientes", "📅 Agendar", "📖 Agendamentos", "📊 Relatório e Consultas"],
+    label_visibility="collapsed"
+)
+
+st.sidebar.divider()
+st.sidebar.markdown("🐝 Sistema de Gestão")
+
+# ---------- ARQUIVOS E DADOS ----------
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
@@ -26,7 +41,6 @@ SERVICOS_PADRAO = {
     "Outros": 0.00
 }
 
-# ---------- Funções de Dados ----------
 def carregar_dados(arquivo):
     if not os.path.exists(arquivo):
         return []
@@ -37,19 +51,13 @@ def salvar_dados(dados, arquivo):
     with open(arquivo, "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
-# ---------- Interface Principal ----------
-st.title("💄 Sistema de Gestão — Salão Abelhinha")
-st.divider()
+# ---------- CONTEÚDO DAS PÁGINAS ----------
 
-aba1, aba2, aba3, aba4 = st.tabs([
-    "📋 Clientes",
-    "📅 Agendar",
-    "📖 Agendamentos",
-    "📊 Relatório e Consultas"
-])
+# ===== PÁGINA 1: CLIENTES =====
+if pagina == "👥 Clientes":
+    st.title("👥 Clientes")
+    st.divider()
 
-# ===== ABA 1: Clientes =====
-with aba1:
     st.subheader("Cadastrar Cliente")
     with st.form("form_cadastro", clear_on_submit=True):
         col1, col2 = st.columns(2)
@@ -72,12 +80,12 @@ with aba1:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
-        escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes, key="sel_editar")
+        escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes)
         if escolha:
             indice = lista_nomes.index(escolha)
             cliente_atual = clientes[indice]
-            novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"], key="edit_nome")
-            novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"], key="edit_tel")
+            novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"])
+            novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"])
             col_editar, col_excluir = st.columns(2)
             with col_editar:
                 if st.button("✏️ Salvar Alterações", type="primary"):
@@ -98,9 +106,11 @@ with aba1:
     st.subheader("Lista de Clientes")
     st.table(clientes)
 
-# ===== ABA 2: Agendar =====
-with aba2:
-    st.subheader("Novo Agendamento")
+# ===== PÁGINA 2: AGENDAR =====
+elif pagina == "📅 Agendar":
+    st.title("📅 Novo Agendamento")
+    st.divider()
+
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
     with st.form("form_agendar", clear_on_submit=True):
@@ -141,10 +151,11 @@ with aba2:
             else:
                 st.warning("⚠️ Preencha todos os campos e digite o valor!")
 
-# ===== ABA 3: Agendamentos =====
-with aba3:
-    st.subheader("📖 Agendamentos")
+# ===== PÁGINA 3: AGENDAMENTOS =====
+elif pagina == "📖 Agendamentos":
+    st.title("📖 Agendamentos")
     st.divider()
+
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
 
     if agendamentos:
@@ -181,9 +192,9 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO =====
-with aba4:
-    st.subheader("📊 Relatório e Consultas")
+# ===== PÁGINA 4: RELATÓRIO =====
+elif pagina == "📊 Relatório e Consultas":
+    st.title("📊 Relatório e Consultas")
     st.divider()
 
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
@@ -209,9 +220,9 @@ with aba4:
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
-            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY", key="consulta_ini")
+            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY")
         with col_dt_fim:
-            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY", key="consulta_fim")
+            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY")
 
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
@@ -226,7 +237,7 @@ with aba4:
             st.markdown("### 👥 Clientes atendidos:")
             for nome in clientes_atendidos:
                 qtd = len([a for a in realizados if a["cliente"] == nome])
-                st.markdown(f"- **{nome}** — {qtd} atendimento(s)")
+                st.markdown(f"- **{nome}** — {qtd} agendamento(s)")
             
             st.divider()
             st.markdown("### 📋 Atendimentos Detalhados:")
@@ -242,9 +253,9 @@ with aba4:
 
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
-            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY", key="rel_ini")
+            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY")
         with col_data_fim:
-            data_final = st.date_input("Data Final", format="DD/MM/YYYY", key="rel_fim")
+            data_final = st.date_input("Data Final", format="DD/MM/YYYY")
 
         filtro_status = st.selectbox("Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
 
@@ -270,11 +281,9 @@ with aba4:
         total_agendado = sum([a["valor"] for a in lista_agendados])
         qtd_realizados = len(lista_realizados)
         qtd_agendados = len(lista_agendados)
-        qtd_servicos = len(lista_filtrada)
 
         st.divider()
 
-        # ✅ TÍTULO DO RELATÓRIO — SEM AS INFORMAÇÕES ABAIXO
         st.markdown("""
         <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO ABELHINHA</h2>
         <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
@@ -282,11 +291,8 @@ with aba4:
 
         st.divider()
 
-        # ✅ REMOVIDO: Período, Filtro, Data de Emissão e Total de Registros
-
         st.subheader("📋 Detalhamento")
 
-        # ✅ VALOR FORMATADO COM 2 CASAS DECIMAIS
         tabela_dados = []
         for item in lista_filtrada:
             tabela_dados.append({
@@ -301,7 +307,6 @@ with aba4:
 
         st.divider()
 
-        # ✅ TOTAIS
         st.markdown(f"""
         <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
         <strong>✅ Total Realizado ({qtd_realizados} agendamento(s)):</strong> R$ {total_realizado:.2f}<br>
