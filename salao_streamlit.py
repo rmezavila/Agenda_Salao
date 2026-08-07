@@ -13,7 +13,7 @@ st.set_page_config(
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
-# Lista padrão de serviços com valores SUGERIDOS
+# ✅ Lista de serviços com "Outros" incluído
 SERVICOS_PADRAO = {
     "Manicure": 25.00,
     "Pedicure": 30.00,
@@ -21,7 +21,8 @@ SERVICOS_PADRAO = {
     "Hidratação Capilar": 60.00,
     "Corte Feminino": 70.00,
     "Coloração": 90.00,
-    "Escova": 35.00
+    "Escova": 35.00,
+    "Outros": 0.00  # ✅ Novo! Valor começa em 0,00
 }
 
 # ---------- Funções de Dados ----------
@@ -46,7 +47,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "📊 Financeiro"
 ])
 
-# ===== ABA 1: Clientes (Cadastrar, Editar, Excluir) =====
+# ===== ABA 1: Clientes =====
 with aba1:
     st.subheader("Cadastrar Cliente")
     col1, col2 = st.columns(2)
@@ -103,7 +104,7 @@ with aba1:
     st.subheader("Lista de Clientes")
     st.table(clientes)
 
-# ===== ABA 2: Agendar (com valor editável) =====
+# ===== ABA 2: Agendar =====
 with aba2:
     st.subheader("Novo Agendamento")
 
@@ -114,23 +115,27 @@ with aba2:
 
     servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
 
+    # ✅ Valor começa em 0,00 — o usuário digita o valor
     if servico_nome:
         valor_padrao = SERVICOS_PADRAO[servico_nome]
         valor = st.number_input("Valor do Serviço (R$)",
                                   min_value=0.0,
-                                  value=float(valor_padrao),
+                                  value=0.00,  # ✅ Sempre começa em 0,00
                                   step=5.0,
                                   format="%.2f")
-        st.info(f"Valor padrão: R$ {valor_padrao:.2f} — ajuste acima se precisar")
+        if servico_nome != "Outros":
+            st.info(f"Valor sugerido: R$ {valor_padrao:.2f} — confirme ou altere")
+        else:
+            st.info("Serviço 'Outros' — digite o valor acima ✏️")
 
     col1, col2 = st.columns(2)
     with col1:
-        data = st.date_input("Data")
+        data = st.date_input("Data", format="DD/MM/YYYY")  # ✅ dd/mm/aaaa
     with col2:
         hora = st.time_input("Hora")
 
     data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
-    data_str = data.strftime("%d/%m/%Y")
+    data_str = data.strftime("%d/%m/%Y")  # ✅ Salva como dd/mm/aaaa
 
     if st.button("✅ Confirmar Agendamento", type="primary"):
         if cliente_sel and servico_nome and valor > 0:
@@ -152,7 +157,7 @@ with aba2:
 📅 Data: {data_hora_str}""")
             st.rerun()
         else:
-            st.warning("Preencha todos os campos!")
+            st.warning("Preencha todos os campos e digite o valor!")
 
 # ===== ABA 3: Agendamentos =====
 with aba3:
@@ -174,7 +179,6 @@ with aba4:
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
-        # ✅ CORREÇÃO: usa "data_hora" se o campo "data" não existir
         def pegar_data(agendamento):
             if "data" in agendamento:
                 return agendamento["data"]
