@@ -5,12 +5,12 @@ import os
 
 # Configuração da página
 st.set_page_config(
-    page_title="Salão Abelhinha",   # ← Nome que aparece na aba
-    page_icon="🐝",                 # ← Ícone (abelhinha!)
+    page_title="Salão Abelhinha",
+    page_icon="🐝",
     layout="wide"
 )
-)
-st.image("logo.jpg", width=300)
+
+st.image("logo.jpg", width=150)
 
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
