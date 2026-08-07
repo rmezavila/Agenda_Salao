@@ -44,27 +44,30 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "📋 Clientes",
     "📅 Agendar",
     "📖 Agendamentos",
-    "📊 Financeiro"
+    "📊 Relatório Financeiro"
 ])
 
-# ===== ABA 1: Clientes =====
+# ===== ABA 1: Clientes (Cadastrar com FORM = LIMPA AUTOMÁTICO) =====
 with aba1:
     st.subheader("Cadastrar Cliente")
-    col1, col2 = st.columns(2)
-    with col1:
-        nome = st.text_input("Nome Completo", key="cad_nome")
-    with col2:
-        telefone = st.text_input("Telefone", key="cad_telefone")
 
-    if st.button("✅ Cadastrar", type="primary"):
-        if nome and telefone:
-            clientes = carregar_dados(ARQUIVO_CLIENTES)
-            clientes.append({"nome": nome, "telefone": telefone})
-            salvar_dados(clientes, ARQUIVO_CLIENTES)
-            st.success(f"Cliente {nome} cadastrado com sucesso!")
-            st.rerun()  # ✅ LIMPA NOME E TELEFONE automaticamente!
-        else:
-            st.warning("Preencha Nome e Telefone!")
+    # ✅ FORMULÁRIO — LIMPA TUDO APÓS SALVAR! Não duplica mais!
+    with st.form("form_cadastro", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            nome = st.text_input("Nome Completo")
+        with col2:
+            telefone = st.text_input("Telefone")
+        cadastrar = st.form_submit_button("✅ Cadastrar", type="primary")
+
+        if cadastrar:
+            if nome and telefone:
+                clientes = carregar_dados(ARQUIVO_CLIENTES)
+                clientes.append({"nome": nome, "telefone": telefone})
+                salvar_dados(clientes, ARQUIVO_CLIENTES)
+                st.success(f"✅ Cliente **{nome}** cadastrado com sucesso!")
+            else:
+                st.warning("⚠️ Preencha Nome e Telefone!")
 
     st.divider()
     st.subheader("Editar / Excluir Cliente")
@@ -88,14 +91,14 @@ with aba1:
                     clientes[indice]["nome"] = novo_nome
                     clientes[indice]["telefone"] = novo_telefone
                     salvar_dados(clientes, ARQUIVO_CLIENTES)
-                    st.success("Cliente atualizado! ✅")
+                    st.success("✅ Cliente atualizado!")
                     st.rerun()
 
             with col_excluir:
                 if st.button("🗑️ Excluir Cliente", type="secondary"):
                     clientes.pop(indice)
                     salvar_dados(clientes, ARQUIVO_CLIENTES)
-                    st.warning("Cliente excluído! ⚠️")
+                    st.warning("⚠️ Cliente excluído!")
                     st.rerun()
     else:
         st.info("Nenhum cliente cadastrado.")
@@ -111,52 +114,74 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes, key="ag_cliente")
-    servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()), key="ag_servico")
-    valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f", key="ag_valor")
+    # ✅ FORMULÁRIO — LIMPA TUDO APÓS CONFIRMAR!
+    with st.form("form_agendar", clear_on_submit=True):
+        cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
+        servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
+        valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        data = st.date_input("Data", format="DD/MM/YYYY", key="ag_data")
-    with col2:
-        hora = st.time_input("Hora", key="ag_hora")
+        col1, col2 = st.columns(2)
+        with col1:
+            data = st.date_input("Data", format="DD/MM/YYYY")
+        with col2:
+            hora = st.time_input("Hora")
 
-    data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
-    data_str = data.strftime("%d/%m/%Y")
+        confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
 
-    if st.button("✅ Confirmar Agendamento", type="primary"):
-        if cliente_sel and servico_nome and valor > 0:
-            nome_cliente = cliente_sel.split(" — ")[0]
-            agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
-            agendamentos.append({
-                "cliente": nome_cliente,
-                "servico": servico_nome,
-                "valor": round(valor, 2),
-                "data_hora": data_hora_str,
-                "data": data_str,
-                "status": "Agendado"
-            })
-            salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
-            st.success(f"""✅ Agendamento confirmado!
+        if confirmar:
+            if cliente_sel and servico_nome and valor > 0:
+                nome_cliente = cliente_sel.split(" — ")[0]
+                data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
+                data_str = data.strftime("%d/%m/%Y")
+
+                agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
+                agendamentos.append({
+                    "cliente": nome_cliente,
+                    "servico": servico_nome,
+                    "valor": round(valor, 2),
+                    "data_hora": data_hora_str,
+                    "data": data_str,
+                    "status": "Agendado"
+                })
+                salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
+                st.success(f"""✅ Agendamento confirmado!
 👤 Cliente: {nome_cliente}
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
 📅 Data: {data_hora_str}""")
-            st.rerun()  # ✅ LIMPA AGENDAMENTO automaticamente!
-        else:
-            st.warning("Preencha todos os campos e digite o valor!")
+            else:
+                st.warning("⚠️ Preencha todos os campos e digite o valor!")
 
-# ===== ABA 3: Agendamentos =====
+# ===== ABA 3: Agendamentos + EXCLUIR =====
 with aba3:
-    st.subheader("Todos os Agendamentos")
+    st.subheader("📖 Agendamentos Realizados")
+    st.divider()
+
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
 
     if agendamentos:
+        # Lista para selecionar e excluir
+        lista_agendamentos = [
+            f"{a['data_hora']} | {a['cliente']} | {a['servico']} | R$ {a['valor']:.2f}"
+            for a in agendamentos
+        ]
+        escolha_ag = st.selectbox("Selecione para EXCLUIR", [""] + lista_agendamentos)
+
+        if escolha_ag:
+            indice = lista_agendamentos.index(escolha_ag)
+            if st.button("🗑️ Excluir Este Agendamento", type="secondary"):
+                agendamentos.pop(indice)
+                salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
+                st.warning("⚠️ Agendamento excluído!")
+                st.rerun()
+
+        st.divider()
+        st.subheader("Lista Completa")
         st.table(agendamentos)
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO FINANCEIRO — POR PERÍODO =====
+# ===== ABA 4: RELATÓRIO FINANCEIRO — FORMATO CONTÁBIL =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -175,7 +200,7 @@ with aba4:
             return "Sem data"
 
         # FILTRO POR PERÍODO
-        st.subheader("📅 Filtrar por Período")
+        st.subheader("📅 Período do Relatório")
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
             data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY")
@@ -198,31 +223,68 @@ with aba4:
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
-        st.info(f"Período: {data_ini_str} a {data_fim_str} — {len(lista_filtrada)} agendamentos")
-
         # Calcular totais
         total_valor = sum([a["valor"] for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
-        col_res1, col_res2 = st.columns(2)
-        with col_res1:
-            st.metric(label="🔢 Serviços Realizados", value=f"{qtd_servicos}")
-        with col_res2:
-            st.metric(label="💵 Valor Total do Período", value=f"R$ {total_valor:.2f}")
-
         st.divider()
-        st.subheader("📋 Detalhamento do Período")
 
-        # Área formatada para IMPRIMIR
-        with st.container():
-            st.markdown("### 📄 Relatório para Impressão")
+        # ✅ RELATÓRIO NO FORMATO CONTÁBIL
+        st.markdown("""
+        <style>
+        .relatorio {
+            font-family: 'Courier New', monospace;
+            background: #fff;
+            color: #000;
+            padding: 2rem;
+            border: 1px solid #ccc;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="relatorio">
+
+        <h3 style="text-align: center; margin-bottom: 0;">RELATÓRIO FINANCEIRO</h3>
+        <p style="text-align: center; margin-top: 0; font-size: 0.9em;">Salão de Beleza</p>
+        <hr>
+
+        <p><strong>Período:</strong> {data_ini_str} a {data_fim_str}</p>
+        <p><strong>Data de Emissão:</strong> {datetime.now().strftime("%d/%m/%Y")}</p>
+
+        <hr>
+
+        <table style="width:100%; border-collapse: collapse;">
+        <tr>
+            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Data</th>
+            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Cliente</th>
+            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Serviço</th>
+            <th style="text-align:right; border-bottom: 1px solid #000; padding: 8px;">Valor R$</th>
+        </tr>
+        """, unsafe_allow_html=True)
+
+        for item in lista_filtrada:
             st.markdown(f"""
-            **Período:** {data_ini_str} a {data_fim_str}
-            **Total de Serviços:** {qtd_servicos}
-            **Valor Total:** R$ {total_valor:.2f}
-            ---
-            """)
-            st.table(lista_filtrada)
-            st.markdown("---\n*Emitido pelo Sistema de Gestão — Salão de Beleza*")
+        <tr>
+            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{pegar_data(item)}</td>
+            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{item['cliente']}</td>
+            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{item['servico']}</td>
+            <td style="padding: 6px 0; border-bottom: 1px solid #ddd; text-align:right;">{item['valor']:.2f}</td>
+        </tr>
+            """, unsafe_allow_html=True)
 
-        st.info("💡 Para imprimir: clique com botão direito → **Imprimir** ou aperte Ctrl+P")
+        st.markdown(f"""
+        <tr>
+            <td colspan="3" style="text-align:right; padding: 12px 0 4px 0; font-weight: bold; font-size: 1.1em;">TOTAL GERAL .................</td>
+            <td style="text-align:right; padding: 12px 0 4px 0; font-weight: bold; font-size: 1.1em;">R$ {total_valor:.2f}</td>
+        </tr>
+        </table>
+
+        <hr>
+
+        <p style="text-align: right; margin-top: 40px;">_______________________________<br>Responsável</p>
+
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.info("💡 Para imprimir: aperte **Ctrl + P** → o relatório sai formatado em página branca!")
