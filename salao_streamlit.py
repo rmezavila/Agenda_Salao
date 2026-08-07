@@ -13,7 +13,7 @@ st.set_page_config(
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
-# Lista padrão de serviços com valores SUGERIDOS (pode alterar ao agendar)
+# Lista padrão de serviços com valores SUGERIDOS
 SERVICOS_PADRAO = {
     "Manicure": 25.00,
     "Pedicure": 30.00,
@@ -71,7 +71,8 @@ with aba1:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
-        escolha = st.selectbox("Selecione o Cliente", [""] + lista_nomes)
+        # ✅ NOME DIFERENTE AQUI
+        escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes)
 
         if escolha:
             indice = lista_nomes.index(escolha)
@@ -110,7 +111,8 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
+    # ✅ NOME DIFERENTE AQUI
+    cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes)
 
     servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
 
@@ -173,12 +175,9 @@ with aba4:
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
-        # Pegar datas únicas para filtro
         datas_disponiveis = sorted(list(set([a["data"] for a in agendamentos])), reverse=True)
-
         filtro_data = st.selectbox("Filtrar por Data", ["Todas"] + datas_disponiveis)
 
-        # Aplicar filtro
         if filtro_data == "Todas":
             lista_filtrada = agendamentos
             st.info(f"Período: TODAS as datas ({len(agendamentos)} agendamentos)")
@@ -186,7 +185,6 @@ with aba4:
             lista_filtrada = [a for a in agendamentos if a["data"] == filtro_data]
             st.info(f"Data: {filtro_data} ({len(lista_filtrada)} agendamentos)")
 
-        # Calcular totais
         total_valor = sum([a["valor"] for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
