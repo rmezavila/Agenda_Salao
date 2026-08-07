@@ -114,7 +114,6 @@ with aba2:
         with col2:
             hora = st.time_input("Hora")
 
-        # ✅ TRÊS OPÇÕES DE STATUS
         status = st.selectbox("Status", ["Agendado", "✅ Realizado", "❌ Não Realizado"])
 
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
@@ -142,7 +141,7 @@ with aba2:
             else:
                 st.warning("⚠️ Preencha todos os campos e digite o valor!")
 
-# ===== ABA 3: Agendamentos + EXCLUIR + ALTERAR STATUS =====
+# ===== ABA 3: Agendamentos =====
 with aba3:
     st.subheader("📖 Agendamentos")
     st.divider()
@@ -182,7 +181,7 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO + CONSULTA DE CLIENTES =====
+# ===== ABA 4: RELATÓRIO =====
 with aba4:
     st.subheader("📊 Relatório e Consultas")
     st.divider()
@@ -206,7 +205,7 @@ with aba4:
             except:
                 return False
 
-        # 📋 CONSULTA DE CLIENTES ATENDIDOS POR PERÍODO
+        # 📋 CONSULTA DE CLIENTES ATENDIDOS
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
@@ -217,7 +216,6 @@ with aba4:
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
 
-        # ✅ SÓ APARECE OS REALIZADOS — NÃO REALIZADO FICA FORA!
         realizados = [a for a in agendamentos 
                      if a.get("status") == "✅ Realizado" 
                      and data_entre(pegar_data(a), dt_ini_cons, dt_fim_cons)]
@@ -234,8 +232,8 @@ with aba4:
             st.markdown("### 📋 Atendimentos Detalhados:")
             st.table(realizados)
 
-            total_valor = sum([a["valor"] for a in realizados])
-            st.markdown(f"### 💰 Total do Período: R$ {total_valor:.2f}")
+            total_valor_realizado = sum([a["valor"] for a in realizados])
+            st.markdown(f"### 💰 Total Realizado: R$ {total_valor_realizado:.2f}")
         else:
             st.info("Nenhum serviço realizado no período selecionado.")
 
@@ -258,13 +256,19 @@ with aba4:
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
-        # ✅ NÃO REALIZADO NUNCA APARECE NO RELATÓRIO FINANCEIRO
+        # ❌ NÃO REALIZADO NÃO APARECE
         lista_filtrada = [a for a in lista_filtrada if a.get("status") != "❌ Não Realizado"]
 
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
-        total_valor = sum([a["valor"] for a in lista_filtrada])
+        # ✅ CALCULA TOTAIS SEPARADOS
+        lista_realizados = [a for a in lista_filtrada if a.get("status") == "✅ Realizado"]
+        lista_agendados = [a for a in lista_filtrada if a.get("status") == "Agendado"]
+
+        total_realizado = sum([a["valor"] for a in lista_realizados])
+        total_agendado = sum([a["valor"] for a in lista_agendados])
+        total_geral = total_realizado + total_agendado
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
@@ -285,6 +289,7 @@ with aba4:
 
         st.subheader("📋 Detalhamento")
 
+        # ✅ VALOR FORMATADO COM 2 CASAS DECIMAIS
         tabela_dados = []
         for item in lista_filtrada:
             tabela_dados.append({
@@ -292,15 +297,20 @@ with aba4:
                 "Cliente": item["cliente"],
                 "Serviço": item["servico"],
                 "Status": item.get("status", "Agendado"),
-                "Valor R$": f"{item['valor']:.2f}"
+                "Valor (R$)": f"{item['valor']:.2f}"
             })
 
         st.table(tabela_dados)
 
         st.divider()
 
+        # ✅ SOMATÓRIOS SEPARADOS
         st.markdown(f"""
-        <h3 style='text-align: right; padding-right: 20px;'>TOTAL GERAL: R$ {total_valor:.2f}</h3>
+        <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
+        <strong>✅ Total Realizado:</strong> R$ {total_realizado:.2f}<br>
+        <strong>📅 Total Agendado:</strong> R$ {total_agendado:.2f}<br>
+        <strong>💰 TOTAL GERAL:</strong> R$ {total_geral:.2f}
+        </div>
         """, unsafe_allow_html=True)
 
         st.divider()
