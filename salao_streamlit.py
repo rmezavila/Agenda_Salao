@@ -262,7 +262,7 @@ with aba4:
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
-        # ✅ TOTAIS SEPARADOS — AGENDADO NÃO SOMA COM REALIZADO
+        # ✅ TOTAIS SEPARADOS
         lista_realizados = [a for a in lista_filtrada if a.get("status") == "✅ Realizado"]
         lista_agendados = [a for a in lista_filtrada if a.get("status") == "Agendado"]
 
@@ -274,6 +274,7 @@ with aba4:
 
         st.divider()
 
+        # ✅ TÍTULO DO RELATÓRIO — SEM AS INFORMAÇÕES ABAIXO
         st.markdown("""
         <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO ABELHINHA</h2>
         <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
@@ -281,12 +282,7 @@ with aba4:
 
         st.divider()
 
-        st.markdown(f"**Período:** {data_ini_str} a {data_fim_str}")
-        st.markdown(f"**Filtro:** {filtro_status}")
-        st.markdown(f"**Data de Emissão:** {datetime.now().strftime('%d/%m/%Y')}")
-        st.markdown(f"**Total de Registros:** {qtd_servicos}")
-
-        st.divider()
+        # ✅ REMOVIDO: Período, Filtro, Data de Emissão e Total de Registros
 
         st.subheader("📋 Detalhamento")
 
@@ -305,7 +301,7 @@ with aba4:
 
         st.divider()
 
-        # ✅ TEXTO ALTERADO + SEM A LINHA FIXA
+        # ✅ TOTAIS
         st.markdown(f"""
         <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
         <strong>✅ Total Realizado ({qtd_realizados} agendamento(s)):</strong> R$ {total_realizado:.2f}<br>
