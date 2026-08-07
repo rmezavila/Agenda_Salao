@@ -9,6 +9,7 @@ st.set_page_config(
     page_icon="💅",
     layout="wide"
 )
+st.image("logo_salao.jpg", width=150)
 
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
