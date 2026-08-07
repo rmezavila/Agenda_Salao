@@ -5,9 +5,10 @@ import os
 
 # Configuração da página
 st.set_page_config(
-    page_title="💄 Abelhinha",
-    page_icon="💅",
+    page_title="Salão Abelhinha",   # ← Nome que aparece na aba
+    page_icon="🐝",                 # ← Ícone (abelhinha!)
     layout="wide"
+)
 )
 st.image("logo.jpg", width=300)
 
