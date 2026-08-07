@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 
 # ==============================================
-# 🔒 CONTROLE DE ACESSO POR SENHA
+# 🔒 CONTROLE DE ACESSO — LIGA E DESLIGA COM #
 # ==============================================
 st.set_page_config(
     page_title="Salão Abelhinha",
@@ -16,22 +16,23 @@ st.set_page_config(
 st.title("🔒 Acesso Restrito")
 senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
 
-# ✅ ALTERE AQUI PARA BLOQUEAR/LIBERAR
-# Para bloquear: troca a senha por qualquer valor novo
-# Para liberar: volta a senha para o valor que quer usar
-SENHA_CORRETA = ""
+# ✅ DEFINE A SENHA AQUI
+SENHA_CORRETA = "Salao2026"  # ← Troca a senha aqui quando precisar
 
-if senha_digitada != SENHA_CORRETA:
+# ==============================================
+# 🔓 PARA DESLIGAR A SENHA → COLOQUE # NAS 3 LINHAS ABAIXO
+# 🔒 PARA LIGAR A SENHA → TIRE O # DAS LINHAS
+# ==============================================
+if SENHA_CORRETA != "" and senha_digitada != SENHA_CORRETA:
     st.warning("⚠️ Senha incorreta. Acesso bloqueado.")
-    st.stop()  # ❌ Para o sistema inteiro se a senha estiver errada
+    st.stop()
 
-st.success("✅ Acesso liberado!")
 st.divider()
 
 # ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
 hoje = datetime.today().date()
 
-# ---------- MENU LATERAL ----------
+# ---------- RESTO DO SISTEMA CONTINUA IGUAL ----------
 st.sidebar.image("logo.jpg", width=400)
 st.sidebar.title("💄 Salão Abelhinha")
 st.sidebar.divider()
@@ -45,7 +46,6 @@ pagina = st.sidebar.radio(
 st.sidebar.divider()
 st.sidebar.markdown("🐝 Sistema de Gestão")
 
-# ---------- ARQUIVOS E DADOS ----------
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
@@ -74,7 +74,6 @@ def salvar_dados(dados, arquivo):
 if pagina == "👥 Clientes":
     st.title("👥 Clientes")
     st.divider()
-
     st.subheader("Cadastrar Cliente")
     with st.form("form_cadastro", clear_on_submit=True):
         col1, col2 = st.columns(2)
@@ -91,7 +90,6 @@ if pagina == "👥 Clientes":
                 st.success(f"✅ Cliente **{nome}** cadastrado com sucesso!")
             else:
                 st.warning("⚠️ Preencha Nome e Telefone!")
-
     st.divider()
     st.subheader("Editar / Excluir Cliente")
     clientes = carregar_dados(ARQUIVO_CLIENTES)
@@ -128,25 +126,19 @@ elif pagina == "📅 Agendar":
     data_texto = hoje.strftime("%d/%m/%Y")
     st.markdown(f"# 📅 Novo Agendamento — Hoje: {data_texto}")
     st.divider()
-
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
-    
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("👤 Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("💇 Serviço", list(SERVICOS_PADRAO.keys()))
-        
         valor_padrao = SERVICOS_PADRAO[servico_nome]
         valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=valor_padrao, step=5.0, format="%.2f")
-
         col1, col2 = st.columns(2)
         with col1:
             data = st.date_input("📅 Data do Agendamento", value=hoje, format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("⏰ Hora")
-
         status = st.selectbox("📌 Status", ["Agendado", "✅ Realizado", "❌ Não Realizado"])
-
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
         if confirmar:
             if cliente_sel and servico_nome and valor > 0:
@@ -177,20 +169,16 @@ elif pagina == "📅 Agendar":
 elif pagina == "📖 Agendamentos":
     st.markdown(f"# 📖 Agendamentos — {hoje.strftime('%d/%m/%Y')}")
     st.divider()
-
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
-
     if agendamentos:
         lista_agendamentos = [
             f"{a['data_hora']} | {a['cliente']} | {a['servico']} | {a.get('status', 'Agendado')}"
             for a in agendamentos
         ]
         escolha_ag = st.selectbox("Selecione para Alterar Status ou Excluir", [""] + lista_agendamentos)
-
         if escolha_ag:
             indice = lista_agendamentos.index(escolha_ag)
             status_atual = agendamentos[indice].get("status", "Agendado")
-
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 novo_status = st.selectbox("Alterar Status", 
@@ -207,10 +195,8 @@ elif pagina == "📖 Agendamentos":
                     salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
                     st.warning("⚠️ Agendamento excluído!")
                     st.rerun()
-
         st.divider()
         st.subheader("📋 Lista Completa")
-        
         tabela_exibicao = []
         for a in agendamentos:
             tabela_exibicao.append({
@@ -229,9 +215,7 @@ elif pagina == "📖 Agendamentos":
 elif pagina == "📊 Relatório e Consultas":
     st.markdown(f"# 📊 Relatório e Consultas — {hoje.strftime('%d/%m/%Y')}")
     st.divider()
-
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
-
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
@@ -241,28 +225,21 @@ elif pagina == "📊 Relatório e Consultas":
             elif "data_hora" in agendamento:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
-
         def data_entre(data_ag, d_ini, d_fim):
             try:
                 dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
                 return d_ini <= dt_ag <= d_fim
             except:
                 return False
-
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
             data_ini_consulta = st.date_input("📅 Data Inicial", value=hoje, format="DD/MM/YYYY", key="consulta_ini")
         with col_dt_fim:
             data_fim_consulta = st.date_input("📅 Data Final", value=hoje, format="DD/MM/YYYY", key="consulta_fim")
-
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
-
-        realizados = [a for a in agendamentos 
-                     if a.get("status") == "✅ Realizado" 
-                     and data_entre(pegar_data(a), dt_ini_cons, dt_fim_cons)]
-
+        realizados = [a for a in agendamentos if a.get("status") == "✅ Realizado" and data_entre(pegar_data(a), dt_ini_cons, dt_fim_cons)]
         if realizados:
             st.success(f"✅ {len(realizados)} atendimentos realizados no período")
             clientes_atendidos = sorted(list(set([a["cliente"] for a in realizados])))
@@ -270,59 +247,42 @@ elif pagina == "📊 Relatório e Consultas":
             for nome in clientes_atendidos:
                 qtd = len([a for a in realizados if a["cliente"] == nome])
                 st.markdown(f"- **{nome}** — {qtd} agendamento(s)")
-            
             st.divider()
             st.markdown("### 📋 Atendimentos Detalhados:")
             st.table(realizados)
-
             total_valor_realizado = sum([a["valor"] for a in realizados])
             st.markdown(f"### 💰 Total Realizado: R$ {total_valor_realizado:.2f}")
         else:
             st.info("Nenhum serviço realizado no período selecionado.")
-
         st.divider()
         st.subheader("📄 Relatório Financeiro")
-
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
             data_inicial = st.date_input("📅 Data Inicial", value=hoje, format="DD/MM/YYYY", key="rel_ini")
         with col_data_fim:
             data_final = st.date_input("📅 Data Final", value=hoje, format="DD/MM/YYYY", key="rel_fim")
-
         filtro_status = st.selectbox("📌 Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
-
         data_ini_str = data_inicial.strftime("%d/%m/%Y")
         data_fim_str = data_final.strftime("%d/%m/%Y")
-
         dt_ini = datetime.strptime(data_ini_str, "%d/%m/%Y")
         dt_fim = datetime.strptime(data_fim_str, "%d/%m/%Y")
-
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
-
         lista_filtrada = [a for a in lista_filtrada if a.get("status") != "❌ Não Realizado"]
-
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
-
         lista_realizados = [a for a in lista_filtrada if a.get("status") == "✅ Realizado"]
         lista_agendados = [a for a in lista_filtrada if a.get("status") == "Agendado"]
-
         total_realizado = sum([a["valor"] for a in lista_realizados])
         total_agendado = sum([a["valor"] for a in lista_agendados])
         qtd_realizados = len(lista_realizados)
         qtd_agendados = len(lista_agendados)
-
         st.divider()
-
         st.markdown("""
         <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO ABELHINHA</h2>
         <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
         """, unsafe_allow_html=True)
-
         st.divider()
-
         st.subheader("📋 Detalhamento")
-
         tabela_dados = []
         for item in lista_filtrada:
             tabela_dados.append({
@@ -332,20 +292,15 @@ elif pagina == "📊 Relatório e Consultas":
                 "Status": item.get("status", "Agendado"),
                 "Valor (R$)": f"R$ {item['valor']:.2f}"
             })
-
         st.table(tabela_dados)
-
         st.divider()
-
         st.markdown(f"""
         <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
         <strong>✅ Total Realizado ({qtd_realizados} agendamento(s)):</strong> R$ {total_realizado:.2f}<br>
         <strong>📅 Total Agendado ({qtd_agendados} agendamento(s)):</strong> R$ {total_agendado:.2f}
         </div>
         """, unsafe_allow_html=True)
-
         st.divider()
-
         st.markdown("&nbsp;")
         st.markdown("&nbsp;")
         st.markdown("""
@@ -354,5 +309,4 @@ elif pagina == "📊 Relatório e Consultas":
         <strong>Responsável</strong>
         </p>
         """, unsafe_allow_html=True)
-
         st.info("💡 Para imprimir: aperte **Ctrl + P**")
