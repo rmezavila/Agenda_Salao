@@ -305,12 +305,11 @@ with aba4:
 
         st.divider()
 
-        # ✅ SEPARADOS — NÃO SOMADOS!
+        # ✅ TEXTO ALTERADO + SEM A LINHA FIXA
         st.markdown(f"""
         <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
-        <strong>✅ Total Realizado ({qtd_realizados} atendimentos):</strong> R$ {total_realizado:.2f}<br>
-        <strong>📅 Total Agendado ({qtd_agendados} atendimentos):</strong> R$ {total_agendado:.2f}<br>
-        <em style='font-size: 14px; color: #666;'>*(Agendado não entra no total)*</em>
+        <strong>✅ Total Realizado ({qtd_realizados} agendamento(s)):</strong> R$ {total_realizado:.2f}<br>
+        <strong>📅 Total Agendado ({qtd_agendados} agendamento(s)):</strong> R$ {total_agendado:.2f}
         </div>
         """, unsafe_allow_html=True)
 
