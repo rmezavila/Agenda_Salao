@@ -110,6 +110,10 @@ elif pagina == "📅 Agendar":
 
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
+    
+    # ✅ DATA DE HOJE JÁ PRÉ-SELECIONADA
+    hoje = datetime.today().date()
+    
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
@@ -120,11 +124,12 @@ elif pagina == "📅 Agendar":
 
         col1, col2 = st.columns(2)
         with col1:
-            data = st.date_input("Data", format="DD/MM/YYYY")
+            # ✅ SEMPRE abre com a data de HOJE
+            data = st.date_input("📅 Data", value=hoje, format="DD/MM/YYYY")
         with col2:
-            hora = st.time_input("Hora")
+            hora = st.time_input("⏰ Hora")
 
-        status = st.selectbox("Status", ["Agendado", "✅ Realizado", "❌ Não Realizado"])
+        status = st.selectbox("📌 Status", ["Agendado", "✅ Realizado", "❌ Não Realizado"])
 
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
         if confirmar:
@@ -196,7 +201,7 @@ elif pagina == "📖 Agendamentos":
             tabela_exibicao.append({
                 "cliente": a["cliente"],
                 "servico": a["servico"],
-                "valor": f"R$ {a['valor']:.2f}",  # ← AQUI FORMATAMOS COM 2 CASAS
+                "valor": f"R$ {a['valor']:.2f}",
                 "data_hora": a["data_hora"],
                 "data": a["data"],
                 "status": a.get("status", "Agendado")
@@ -233,9 +238,9 @@ elif pagina == "📊 Relatório e Consultas":
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
-            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY", key="consulta_ini")
+            data_ini_consulta = st.date_input("Data Inicial", value=hoje, format="DD/MM/YYYY", key="consulta_ini")
         with col_dt_fim:
-            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY", key="consulta_fim")
+            data_fim_consulta = st.date_input("Data Final", value=hoje, format="DD/MM/YYYY", key="consulta_fim")
 
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
@@ -266,9 +271,9 @@ elif pagina == "📊 Relatório e Consultas":
 
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
-            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY", key="rel_ini")
+            data_inicial = st.date_input("Data Inicial", value=hoje, format="DD/MM/YYYY", key="rel_ini")
         with col_data_fim:
-            data_final = st.date_input("Data Final", format="DD/MM/YYYY", key="rel_fim")
+            data_final = st.date_input("Data Final", value=hoje, format="DD/MM/YYYY", key="rel_fim")
 
         filtro_status = st.selectbox("Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
 
