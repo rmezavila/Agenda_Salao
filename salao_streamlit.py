@@ -5,7 +5,7 @@ import os
 
 # Configuração da página
 st.set_page_config(
-    page_title="💄 Salão de Beleza",
+    page_title="💄 Abelhinha",
     page_icon="💅",
     layout="wide"
 )
@@ -36,7 +36,7 @@ def salvar_dados(dados, arquivo):
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
 # ---------- Interface Principal ----------
-st.title("💄 Sistema de Gestão — Salão de Beleza")
+st.title("💄 Sistema de Gestão — Salão Abelhinha")
 st.divider()
 
 aba1, aba2, aba3, aba4 = st.tabs([
@@ -204,7 +204,7 @@ with aba4:
 
         # ✅ CABEÇALHO DO RELATÓRIO
         st.markdown("""
-        <h2 style='text-align: center; margin-bottom: 5px;'>💄 SALÃO DE BELEZA</h2>
+        <h2 style='text-align: center; margin-bottom: 5px;'>💄 Abelhinha</h2>
         <p style='text-align: center; color: #666; margin-top: 0;'>Relatório de Movimento Financeiro</p>
         """, unsafe_allow_html=True)
 
