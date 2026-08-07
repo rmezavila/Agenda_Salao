@@ -4,7 +4,7 @@ from datetime import datetime
 import os
 
 # ==============================================
-# 🔒 CONTROLE DE ACESSO — LIGA E DESLIGA COM #
+# 🔒 CONTROLE DE ACESSO — DESATIVADO AGORA
 # ==============================================
 st.set_page_config(
     page_title="Salão Abelhinha",
@@ -13,26 +13,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.title("🔒 Acesso Restrito")
-senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
+# ✅ PARA ATIVAR A SENHA: TIRE O # DAS LINHAS ABAIXO
+# st.title("🔒 Acesso Restrito")
+# senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
+# SENHA_CORRETA = "Salao2026"
+# if SENHA_CORRETA != "" and senha_digitada != SENHA_CORRETA:
+#     st.stop()
 
-# ✅ DEFINE A SENHA AQUI
-SENHA_CORRETA = "Salao2026"  # ← Troca a senha aqui quando precisar
-
-# ==============================================
-# 🔓 PARA DESLIGAR A SENHA → COLOQUE # NAS 3 LINHAS ABAIXO
-# 🔒 PARA LIGAR A SENHA → TIRE O # DAS LINHAS
-# ==============================================
-if SENHA_CORRETA != "" and senha_digitada != SENHA_CORRETA:
-    st.warning("⚠️ Senha incorreta. Acesso bloqueado.")
-    st.stop()
+# ✅ PARA DESATIVAR NOVAMENTE: COLOQUE # NAS LINHAS ACIMA
 
 st.divider()
 
 # ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
 hoje = datetime.today().date()
 
-# ---------- RESTO DO SISTEMA CONTINUA IGUAL ----------
+# ---------- RESTO DO SISTEMA TOTALMENTE NORMAL ----------
 st.sidebar.image("logo.jpg", width=400)
 st.sidebar.title("💄 Salão Abelhinha")
 st.sidebar.divider()
