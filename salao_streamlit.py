@@ -62,7 +62,7 @@ with aba1:
             clientes.append({"nome": nome, "telefone": telefone})
             salvar_dados(clientes, ARQUIVO_CLIENTES)
             st.success(f"Cliente {nome} cadastrado com sucesso!")
-            st.rerun()
+            st.rerun()  # ✅ LIMPA NOME E TELEFONE automaticamente!
         else:
             st.warning("Preencha Nome e Telefone!")
 
@@ -111,7 +111,6 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    # ✅ Campos com chaves únicas — LIMPA automaticamente após confirmar
     cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes, key="ag_cliente")
     servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()), key="ag_servico")
     valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f", key="ag_valor")
@@ -143,7 +142,7 @@ with aba2:
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
 📅 Data: {data_hora_str}""")
-            st.rerun()  # ✅ LIMPA TODOS OS CAMPOS automaticamente!
+            st.rerun()  # ✅ LIMPA AGENDAMENTO automaticamente!
         else:
             st.warning("Preencha todos os campos e digite o valor!")
 
@@ -175,7 +174,7 @@ with aba4:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
 
-        # ✅ FILTRO POR PERÍODO (Data Inicial e Data Final)
+        # FILTRO POR PERÍODO
         st.subheader("📅 Filtrar por Período")
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
@@ -214,7 +213,7 @@ with aba4:
         st.divider()
         st.subheader("📋 Detalhamento do Período")
 
-        # ✅ Área formatada para IMPRIMIR
+        # Área formatada para IMPRIMIR
         with st.container():
             st.markdown("### 📄 Relatório para Impressão")
             st.markdown(f"""
