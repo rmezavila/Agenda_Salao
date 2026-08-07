@@ -13,7 +13,7 @@ st.set_page_config(
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
-# ✅ Lista de serviços com "Outros" incluído
+# Lista de serviços com "Outros" incluído
 SERVICOS_PADRAO = {
     "Manicure": 25.00,
     "Pedicure": 30.00,
@@ -22,7 +22,7 @@ SERVICOS_PADRAO = {
     "Corte Feminino": 70.00,
     "Coloração": 90.00,
     "Escova": 35.00,
-    "Outros": 0.00  # ✅ Novo! Valor começa em 0,00
+    "Outros": 0.00
 }
 
 # ---------- Funções de Dados ----------
@@ -115,27 +115,21 @@ with aba2:
 
     servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
 
-    # ✅ Valor começa em 0,00 — o usuário digita o valor
-    if servico_nome:
-        valor_padrao = SERVICOS_PADRAO[servico_nome]
-        valor = st.number_input("Valor do Serviço (R$)",
-                                  min_value=0.0,
-                                  value=0.00,  # ✅ Sempre começa em 0,00
-                                  step=5.0,
-                                  format="%.2f")
-        if servico_nome != "Outros":
-            st.info(f"Valor sugerido: R$ {valor_padrao:.2f} — confirme ou altere")
-        else:
-            st.info("Serviço 'Outros' — digite o valor acima ✏️")
+    # ✅ Valor sempre começa em 0,00 — SEM mensagem de valor sugerido
+    valor = st.number_input("Valor do Serviço (R$)",
+                              min_value=0.0,
+                              value=0.00,
+                              step=5.0,
+                              format="%.2f")
 
     col1, col2 = st.columns(2)
     with col1:
-        data = st.date_input("Data", format="DD/MM/YYYY")  # ✅ dd/mm/aaaa
+        data = st.date_input("Data", format="DD/MM/YYYY")
     with col2:
         hora = st.time_input("Hora")
 
     data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
-    data_str = data.strftime("%d/%m/%Y")  # ✅ Salva como dd/mm/aaaa
+    data_str = data.strftime("%d/%m/%Y")
 
     if st.button("✅ Confirmar Agendamento", type="primary"):
         if cliente_sel and servico_nome and valor > 0:
