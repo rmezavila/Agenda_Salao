@@ -3,6 +3,9 @@ import json
 from datetime import datetime
 import os
 
+# ✅ DATA DE HOJE — DEFINIDA AQUI NO INÍCIO, VALE PARA TODAS AS PÁGINAS
+hoje = datetime.today().date()
+
 # Configuração da página
 st.set_page_config(
     page_title="Salão Abelhinha",
@@ -111,20 +114,16 @@ elif pagina == "📅 Agendar":
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
     
-    # ✅ DATA DE HOJE JÁ PRÉ-SELECIONADA
-    hoje = datetime.today().date()
-    
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
         
-        # Pega valor automático do serviço, permite alterar
         valor_padrao = SERVICOS_PADRAO[servico_nome]
         valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=valor_padrao, step=5.0, format="%.2f")
 
         col1, col2 = st.columns(2)
         with col1:
-            # ✅ SEMPRE abre com a data de HOJE
+            # ✅ DATA DE HOJE JÁ PRÉ-SELECIONADA
             data = st.date_input("📅 Data", value=hoje, format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("⏰ Hora")
@@ -195,7 +194,6 @@ elif pagina == "📖 Agendamentos":
         st.divider()
         st.subheader("Lista Completa")
         
-        # ✅ TABELA COM VALOR JÁ FORMATADO — sem zeros a mais!
         tabela_exibicao = []
         for a in agendamentos:
             tabela_exibicao.append({
@@ -285,13 +283,11 @@ elif pagina == "📊 Relatório e Consultas":
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
-        # ❌ NÃO REALIZADO NÃO APARECE
         lista_filtrada = [a for a in lista_filtrada if a.get("status") != "❌ Não Realizado"]
 
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
-        # ✅ TOTAIS SEPARADOS
         lista_realizados = [a for a in lista_filtrada if a.get("status") == "✅ Realizado"]
         lista_agendados = [a for a in lista_filtrada if a.get("status") == "Agendado"]
 
