@@ -52,9 +52,9 @@ with aba1:
     st.subheader("Cadastrar Cliente")
     col1, col2 = st.columns(2)
     with col1:
-        nome = st.text_input("Nome Completo")
+        nome = st.text_input("Nome Completo", key="cad_nome")
     with col2:
-        telefone = st.text_input("Telefone")
+        telefone = st.text_input("Telefone", key="cad_telefone")
 
     if st.button("✅ Cadastrar", type="primary"):
         if nome and telefone:
@@ -72,14 +72,14 @@ with aba1:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
-        escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes)
+        escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes, key="sel_editar")
 
         if escolha:
             indice = lista_nomes.index(escolha)
             cliente_atual = clientes[indice]
 
-            novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"])
-            novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"])
+            novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"], key="edit_nome")
+            novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"], key="edit_tel")
 
             col_editar, col_excluir = st.columns(2)
 
@@ -111,22 +111,16 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes)
-
-    servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
-
-    # ✅ Valor sempre começa em 0,00 — SEM mensagem de valor sugerido
-    valor = st.number_input("Valor do Serviço (R$)",
-                              min_value=0.0,
-                              value=0.00,
-                              step=5.0,
-                              format="%.2f")
+    # ✅ Campos com chaves únicas — LIMPA automaticamente após confirmar
+    cliente_sel = st.selectbox("Selecione o Cliente para Agendar", [""] + lista_clientes, key="ag_cliente")
+    servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()), key="ag_servico")
+    valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f", key="ag_valor")
 
     col1, col2 = st.columns(2)
     with col1:
-        data = st.date_input("Data", format="DD/MM/YYYY")
+        data = st.date_input("Data", format="DD/MM/YYYY", key="ag_data")
     with col2:
-        hora = st.time_input("Hora")
+        hora = st.time_input("Hora", key="ag_hora")
 
     data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
     data_str = data.strftime("%d/%m/%Y")
@@ -149,7 +143,7 @@ with aba2:
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
 📅 Data: {data_hora_str}""")
-            st.rerun()
+            st.rerun()  # ✅ LIMPA TODOS OS CAMPOS automaticamente!
         else:
             st.warning("Preencha todos os campos e digite o valor!")
 
@@ -163,7 +157,7 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO FINANCEIRO =====
+# ===== ABA 4: RELATÓRIO FINANCEIRO — POR PERÍODO =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -173,6 +167,7 @@ with aba4:
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
+        # Função auxiliar para extrair data
         def pegar_data(agendamento):
             if "data" in agendamento:
                 return agendamento["data"]
@@ -180,16 +175,33 @@ with aba4:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
 
-        datas_disponiveis = sorted(list(set([pegar_data(a) for a in agendamentos])), reverse=True)
-        filtro_data = st.selectbox("Filtrar por Data", ["Todas"] + datas_disponiveis)
+        # ✅ FILTRO POR PERÍODO (Data Inicial e Data Final)
+        st.subheader("📅 Filtrar por Período")
+        col_data_ini, col_data_fim = st.columns(2)
+        with col_data_ini:
+            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY")
+        with col_data_fim:
+            data_final = st.date_input("Data Final", format="DD/MM/YYYY")
 
-        if filtro_data == "Todas":
-            lista_filtrada = agendamentos
-            st.info(f"Período: TODAS as datas ({len(agendamentos)} agendamentos)")
-        else:
-            lista_filtrada = [a for a in agendamentos if pegar_data(a) == filtro_data]
-            st.info(f"Data: {filtro_data} ({len(lista_filtrada)} agendamentos)")
+        data_ini_str = data_inicial.strftime("%d/%m/%Y")
+        data_fim_str = data_final.strftime("%d/%m/%Y")
 
+        # Filtrar agendamentos dentro do período
+        def data_entre(data_ag, d_ini, d_fim):
+            try:
+                dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
+                return d_ini <= dt_ag <= d_fim
+            except:
+                return False
+
+        dt_ini = datetime.strptime(data_ini_str, "%d/%m/%Y")
+        dt_fim = datetime.strptime(data_fim_str, "%d/%m/%Y")
+
+        lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
+
+        st.info(f"Período: {data_ini_str} a {data_fim_str} — {len(lista_filtrada)} agendamentos")
+
+        # Calcular totais
         total_valor = sum([a["valor"] for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
@@ -197,8 +209,21 @@ with aba4:
         with col_res1:
             st.metric(label="🔢 Serviços Realizados", value=f"{qtd_servicos}")
         with col_res2:
-            st.metric(label="💵 Valor Total", value=f"R$ {total_valor:.2f}")
+            st.metric(label="💵 Valor Total do Período", value=f"R$ {total_valor:.2f}")
 
         st.divider()
-        st.subheader("📋 Detalhamento")
-        st.table(lista_filtrada)
+        st.subheader("📋 Detalhamento do Período")
+
+        # ✅ Área formatada para IMPRIMIR
+        with st.container():
+            st.markdown("### 📄 Relatório para Impressão")
+            st.markdown(f"""
+            **Período:** {data_ini_str} a {data_fim_str}
+            **Total de Serviços:** {qtd_servicos}
+            **Valor Total:** R$ {total_valor:.2f}
+            ---
+            """)
+            st.table(lista_filtrada)
+            st.markdown("---\n*Emitido pelo Sistema de Gestão — Salão de Beleza*")
+
+        st.info("💡 Para imprimir: clique com botão direito → **Imprimir** ou aperte Ctrl+P")
