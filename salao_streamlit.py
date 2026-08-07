@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-st.image("logo.jpg", width=150)
+st.image("logo.jpg", width=400)
 
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
