@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import os
 
-# ✅ DATA DE HOJE — DEFINIDA AQUI NO INÍCIO, VALE PARA TODAS AS PÁGINAS
+# ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
 hoje = datetime.today().date()
 
 # Configuração da página
@@ -108,23 +108,25 @@ if pagina == "👥 Clientes":
 
 # ---------- PÁGINA 2: AGENDAR ----------
 elif pagina == "📅 Agendar":
-    st.title("📅 Novo Agendamento")
+    # ✅ TÍTULO COM DATA DE HOJE EM TEMPO REAL
+    data_texto = hoje.strftime("%d/%m/%Y")
+    st.markdown(f"# 📅 Novo Agendamento — Hoje: {data_texto}")
     st.divider()
 
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
     
     with st.form("form_agendar", clear_on_submit=True):
-        cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
-        servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
+        cliente_sel = st.selectbox("👤 Cliente", [""] + lista_clientes)
+        servico_nome = st.selectbox("💇 Serviço", list(SERVICOS_PADRAO.keys()))
         
         valor_padrao = SERVICOS_PADRAO[servico_nome]
         valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=valor_padrao, step=5.0, format="%.2f")
 
         col1, col2 = st.columns(2)
         with col1:
-            # ✅ DATA DE HOJE JÁ PRÉ-SELECIONADA
-            data = st.date_input("📅 Data", value=hoje, format="DD/MM/YYYY")
+            # ✅ CALENDÁRIO SEMPRE ABRINDO NA DATA DE HOJE
+            data = st.date_input("📅 Data do Agendamento", value=hoje, format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("⏰ Hora")
 
@@ -158,7 +160,7 @@ elif pagina == "📅 Agendar":
 
 # ---------- PÁGINA 3: AGENDAMENTOS ----------
 elif pagina == "📖 Agendamentos":
-    st.title("📖 Agendamentos")
+    st.markdown(f"# 📖 Agendamentos — {hoje.strftime('%d/%m/%Y')}")
     st.divider()
 
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
@@ -192,7 +194,7 @@ elif pagina == "📖 Agendamentos":
                     st.rerun()
 
         st.divider()
-        st.subheader("Lista Completa")
+        st.subheader("📋 Lista Completa")
         
         tabela_exibicao = []
         for a in agendamentos:
@@ -210,7 +212,7 @@ elif pagina == "📖 Agendamentos":
 
 # ---------- PÁGINA 4: RELATÓRIO ----------
 elif pagina == "📊 Relatório e Consultas":
-    st.title("📊 Relatório e Consultas")
+    st.markdown(f"# 📊 Relatório e Consultas — {hoje.strftime('%d/%m/%Y')}")
     st.divider()
 
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
@@ -232,13 +234,12 @@ elif pagina == "📊 Relatório e Consultas":
             except:
                 return False
 
-        # 📋 CONSULTA DE CLIENTES ATENDIDOS POR PERÍODO
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
-            data_ini_consulta = st.date_input("Data Inicial", value=hoje, format="DD/MM/YYYY", key="consulta_ini")
+            data_ini_consulta = st.date_input("📅 Data Inicial", value=hoje, format="DD/MM/YYYY", key="consulta_ini")
         with col_dt_fim:
-            data_fim_consulta = st.date_input("Data Final", value=hoje, format="DD/MM/YYYY", key="consulta_fim")
+            data_fim_consulta = st.date_input("📅 Data Final", value=hoje, format="DD/MM/YYYY", key="consulta_fim")
 
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
@@ -269,11 +270,11 @@ elif pagina == "📊 Relatório e Consultas":
 
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
-            data_inicial = st.date_input("Data Inicial", value=hoje, format="DD/MM/YYYY", key="rel_ini")
+            data_inicial = st.date_input("📅 Data Inicial", value=hoje, format="DD/MM/YYYY", key="rel_ini")
         with col_data_fim:
-            data_final = st.date_input("Data Final", value=hoje, format="DD/MM/YYYY", key="rel_fim")
+            data_final = st.date_input("📅 Data Final", value=hoje, format="DD/MM/YYYY", key="rel_fim")
 
-        filtro_status = st.selectbox("Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
+        filtro_status = st.selectbox("📌 Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
 
         data_ini_str = data_inicial.strftime("%d/%m/%Y")
         data_fim_str = data_final.strftime("%d/%m/%Y")
