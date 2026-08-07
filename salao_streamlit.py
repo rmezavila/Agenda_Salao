@@ -10,9 +10,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# ✅ AQUI VAI O LOGO — ESPAÇO CERTO!
-st.image("logo_salao.png", width=150)
-
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
