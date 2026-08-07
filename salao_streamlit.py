@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Salão Abelhinha",
     page_icon="🐝",
     layout="wide",
-    initial_sidebar_state="expanded"  # Menu já aparece aberto
+    initial_sidebar_state="expanded"
 )
 
 # ---------- MENU LATERAL ----------
@@ -16,7 +16,6 @@ st.sidebar.image("logo.jpg", width=150)
 st.sidebar.title("💄 Salão Abelhinha")
 st.sidebar.divider()
 
-# Botões de navegação na lateral
 pagina = st.sidebar.radio(
     "📂 Navegação",
     ["👥 Clientes", "📅 Agendar", "📖 Agendamentos", "📊 Relatório e Consultas"],
@@ -51,9 +50,7 @@ def salvar_dados(dados, arquivo):
     with open(arquivo, "w", encoding="utf-8") as f:
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
-# ---------- CONTEÚDO DAS PÁGINAS ----------
-
-# ===== PÁGINA 1: CLIENTES =====
+# ---------- PÁGINA 1: CLIENTES ----------
 if pagina == "👥 Clientes":
     st.title("👥 Clientes")
     st.divider()
@@ -106,7 +103,7 @@ if pagina == "👥 Clientes":
     st.subheader("Lista de Clientes")
     st.table(clientes)
 
-# ===== PÁGINA 2: AGENDAR =====
+# ---------- PÁGINA 2: AGENDAR ----------
 elif pagina == "📅 Agendar":
     st.title("📅 Novo Agendamento")
     st.divider()
@@ -151,7 +148,7 @@ elif pagina == "📅 Agendar":
             else:
                 st.warning("⚠️ Preencha todos os campos e digite o valor!")
 
-# ===== PÁGINA 3: AGENDAMENTOS =====
+# ---------- PÁGINA 3: AGENDAMENTOS ----------
 elif pagina == "📖 Agendamentos":
     st.title("📖 Agendamentos")
     st.divider()
@@ -192,7 +189,7 @@ elif pagina == "📖 Agendamentos":
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== PÁGINA 4: RELATÓRIO =====
+# ---------- PÁGINA 4: RELATÓRIO ----------
 elif pagina == "📊 Relatório e Consultas":
     st.title("📊 Relatório e Consultas")
     st.divider()
@@ -220,9 +217,9 @@ elif pagina == "📊 Relatório e Consultas":
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
-            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY")
+            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY", key="consulta_ini")
         with col_dt_fim:
-            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY")
+            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY", key="consulta_fim")
 
         dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
         dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
@@ -253,9 +250,9 @@ elif pagina == "📊 Relatório e Consultas":
 
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
-            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY")
+            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY", key="rel_ini")
         with col_data_fim:
-            data_final = st.date_input("Data Final", format="DD/MM/YYYY")
+            data_final = st.date_input("Data Final", format="DD/MM/YYYY", key="rel_fim")
 
         filtro_status = st.selectbox("Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
 
