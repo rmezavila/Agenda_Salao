@@ -13,7 +13,6 @@ st.set_page_config(
 ARQUIVO_CLIENTES = "clientes_streamlit.json"
 ARQUIVO_AGENDAMENTOS = "agendamentos_streamlit.json"
 
-# Lista de serviços com "Outros" incluído
 SERVICOS_PADRAO = {
     "Manicure": 25.00,
     "Pedicure": 30.00,
@@ -50,7 +49,6 @@ aba1, aba2, aba3, aba4 = st.tabs([
 # ===== ABA 1: Clientes =====
 with aba1:
     st.subheader("Cadastrar Cliente")
-
     with st.form("form_cadastro", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
@@ -58,7 +56,6 @@ with aba1:
         with col2:
             telefone = st.text_input("Telefone")
         cadastrar = st.form_submit_button("✅ Cadastrar", type="primary")
-
         if cadastrar:
             if nome and telefone:
                 clientes = carregar_dados(ARQUIVO_CLIENTES)
@@ -70,21 +67,16 @@ with aba1:
 
     st.divider()
     st.subheader("Editar / Excluir Cliente")
-
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
         escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes, key="sel_editar")
-
         if escolha:
             indice = lista_nomes.index(escolha)
             cliente_atual = clientes[indice]
-
             novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"], key="edit_nome")
             novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"], key="edit_tel")
-
             col_editar, col_excluir = st.columns(2)
-
             with col_editar:
                 if st.button("✏️ Salvar Alterações", type="primary"):
                     clientes[indice]["nome"] = novo_nome
@@ -92,7 +84,6 @@ with aba1:
                     salvar_dados(clientes, ARQUIVO_CLIENTES)
                     st.success("✅ Cliente atualizado!")
                     st.rerun()
-
             with col_excluir:
                 if st.button("🗑️ Excluir Cliente", type="secondary"):
                     clientes.pop(indice)
@@ -101,7 +92,6 @@ with aba1:
                     st.rerun()
     else:
         st.info("Nenhum cliente cadastrado.")
-
     st.divider()
     st.subheader("Lista de Clientes")
     st.table(clientes)
@@ -109,29 +99,23 @@ with aba1:
 # ===== ABA 2: Agendar =====
 with aba2:
     st.subheader("Novo Agendamento")
-
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
-
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
         valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
-
         col1, col2 = st.columns(2)
         with col1:
             data = st.date_input("Data", format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("Hora")
-
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
-
         if confirmar:
             if cliente_sel and servico_nome and valor > 0:
                 nome_cliente = cliente_sel.split(" — ")[0]
                 data_hora_str = data.strftime("%d/%m/%Y") + " " + hora.strftime("%H:%M")
                 data_str = data.strftime("%d/%m/%Y")
-
                 agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
                 agendamentos.append({
                     "cliente": nome_cliente,
@@ -154,16 +138,13 @@ with aba2:
 with aba3:
     st.subheader("📖 Agendamentos Realizados")
     st.divider()
-
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
-
     if agendamentos:
         lista_agendamentos = [
             f"{a['data_hora']} | {a['cliente']} | {a['servico']} | R$ {a['valor']:.2f}"
             for a in agendamentos
         ]
         escolha_ag = st.selectbox("Selecione para EXCLUIR", [""] + lista_agendamentos)
-
         if escolha_ag:
             indice = lista_agendamentos.index(escolha_ag)
             if st.button("🗑️ Excluir Este Agendamento", type="secondary"):
@@ -171,14 +152,13 @@ with aba3:
                 salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
                 st.warning("⚠️ Agendamento excluído!")
                 st.rerun()
-
         st.divider()
         st.subheader("Lista Completa")
         st.table(agendamentos)
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO FINANCEIRO — BEM ALINHADO =====
+# ===== ABA 4: RELATÓRIO FINANCEIRO — SEM HTML NA TELA =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -222,105 +202,51 @@ with aba4:
 
         st.divider()
 
-        # ✅ RELATÓRIO COM TABELA BEM ALINHADA E ESPAÇADA
-        html_relatorio = f"""
-<style>
-    @media print {{
-        body {{ background: white; color: black; }}
-        .no-impressao {{ display: none; }}
-    }}
-    .relatorio {{
-        font-family: 'Courier New', Courier, monospace;
-        background: #ffffff;
-        color: #000000;
-        padding: 30px;
-        border: 1px solid #333;
-        max-width: 900px;
-        margin: 0 auto;
-    }}
-    .relatorio h2 {{
-        text-align: center;
-        margin: 0 0 5px 0;
-        font-size: 18px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-    }}
-    .relatorio .subtitulo {{
-        text-align: center;
-        margin: 0 0 20px 0;
-        font-size: 13px;
-    }}
-    .relatorio .linha {{
-        font-size: 13px;
-        padding: 4px 0;
-        border-bottom: 1px dotted #ccc;
-    }}
-    .relatorio .cabecalho {{
-        font-weight: bold;
-        border-bottom: 1px solid #000;
-        padding: 8px 0;
-        margin: 10px 0;
-    }}
-    .relatorio .total {{
-        font-weight: bold;
-        font-size: 15px;
-        border-top: 2px solid #000;
-        padding: 10px 0;
-        margin-top: 10px;
-    }}
-    .relatorio .assinatura {{
-        text-align: right;
-        margin-top: 50px;
-        padding-right: 50px;
-    }}
-    .col-data {{ display: inline-block; width: 110px; }}
-    .col-cli {{ display: inline-block; width: 220px; }}
-    .col-ser {{ display: inline-block; width: 250px; }}
-    .col-val {{ display: inline-block; width: 150px; text-align: right; }}
-</style>
+        # ✅ RELATÓRIO EM TEXTO BEM ALINHADO — SEM CÓDIGO NA TELA!
+        st.markdown("# 📄 SALÃO DE BELEZA")
+        st.markdown("### Relatório de Movimento Financeiro")
+        st.divider()
 
-<div class="relatorio">
-    <h2>Salão de Beleza</h2>
-    <p class="subtitulo">Relatório de Movimento Financeiro</p>
-    <hr>
+        st.markdown(f"**Período:** {data_ini_str} a {data_fim_str}")
+        st.markdown(f"**Data de Emissão:** {datetime.now().strftime('%d/%m/%Y')}")
+        st.divider()
 
-    <p><strong>Período:</strong> {data_ini_str} a {data_fim_str}</p>
-    <p><strong>Data de Emissão:</strong> {datetime.now().strftime("%d/%m/%Y")}</p>
-    <hr style="margin: 15px 0;">
+        # Cabeçalho das colunas
+        col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
+        with col1: st.markdown("**Data**")
+        with col2: st.markdown("**Cliente**")
+        with col3: st.markdown("**Serviço**")
+        with col4: st.markdown("**Valor R$**")
 
-    <div class="cabecalho">
-        <span class="col-data">Data</span>
-        <span class="col-cli">Cliente</span>
-        <span class="col-ser">Serviço</span>
-        <span class="col-val">Valor R$</span>
-    </div>
-"""
+        st.divider()
 
+        # Listagem dos itens
         for item in lista_filtrada:
-            html_relatorio += f"""
-    <div class="linha">
-        <span class="col-data">{pegar_data(item)}</span>
-        <span class="col-cli">{item['cliente']}</span>
-        <span class="col-ser">{item['servico']}</span>
-        <span class="col-val">{item['valor']:.2f}</span>
-    </div>
-"""
+            d = pegar_data(item)
+            c = item['cliente']
+            s = item['servico']
+            v = f"{item['valor']:.2f}"
+            col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
+            with col1: st.write(d)
+            with col2: st.write(c)
+            with col3: st.write(s)
+            with col4: st.write(v)
 
-        html_relatorio += f"""
-    <div class="total">
-        <span class="col-data"></span>
-        <span class="col-cli"></span>
-        <span class="col-ser">TOTAL GERAL</span>
-        <span class="col-val">R$ {total_valor:.2f}</span>
-    </div>
+        st.divider()
 
-    <div class="assinatura">
-        ________________________________________<br>
-        Responsável
-    </div>
-</div>
-"""
+        # Total Geral
+        col1, col2, col3, col4 = st.columns([2, 4, 4, 2])
+        with col3: st.markdown("### **TOTAL GERAL**")
+        with col4: st.markdown(f"### **R$ {total_valor:.2f}**")
 
-        st.markdown(html_relatorio, unsafe_allow_html=True)
+        st.divider()
 
-        st.info("💡 Para imprimir: aperte **Ctrl + P** → o relatório sai formatado em página branca!")
+        # Linha de assinatura
+        st.markdown("&nbsp;")
+        st.markdown("&nbsp;")
+        col_assin = st.columns([5, 3])
+        with col_assin[1]:
+            st.markdown("___________________________")
+            st.markdown("**Responsável**")
+
+        st.info("💡 Para imprimir: aperte **Ctrl + P**")
