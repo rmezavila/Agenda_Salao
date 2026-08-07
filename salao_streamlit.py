@@ -262,13 +262,14 @@ with aba4:
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
-        # ✅ CALCULA TOTAIS SEPARADOS
+        # ✅ TOTAIS SEPARADOS — AGENDADO NÃO SOMA COM REALIZADO
         lista_realizados = [a for a in lista_filtrada if a.get("status") == "✅ Realizado"]
         lista_agendados = [a for a in lista_filtrada if a.get("status") == "Agendado"]
 
         total_realizado = sum([a["valor"] for a in lista_realizados])
         total_agendado = sum([a["valor"] for a in lista_agendados])
-        total_geral = total_realizado + total_agendado
+        qtd_realizados = len(lista_realizados)
+        qtd_agendados = len(lista_agendados)
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
@@ -304,12 +305,12 @@ with aba4:
 
         st.divider()
 
-        # ✅ SOMATÓRIOS SEPARADOS
+        # ✅ SEPARADOS — NÃO SOMADOS!
         st.markdown(f"""
         <div style='text-align: right; padding-right: 20px; font-size: 18px;'>
-        <strong>✅ Total Realizado:</strong> R$ {total_realizado:.2f}<br>
-        <strong>📅 Total Agendado:</strong> R$ {total_agendado:.2f}<br>
-        <strong>💰 TOTAL GERAL:</strong> R$ {total_geral:.2f}
+        <strong>✅ Total Realizado ({qtd_realizados} atendimentos):</strong> R$ {total_realizado:.2f}<br>
+        <strong>📅 Total Agendado ({qtd_agendados} atendimentos):</strong> R$ {total_agendado:.2f}<br>
+        <em style='font-size: 14px; color: #666;'>*(Agendado não entra no total)*</em>
         </div>
         """, unsafe_allow_html=True)
 
