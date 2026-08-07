@@ -19,7 +19,7 @@ senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
 # ✅ ALTERE AQUI PARA BLOQUEAR/LIBERAR
 # Para bloquear: troca a senha por qualquer valor novo
 # Para liberar: volta a senha para o valor que quer usar
-SENHA_CORRETA = "abelha85"
+SENHA_CORRETA = ""
 
 if senha_digitada != SENHA_CORRETA:
     st.warning("⚠️ Senha incorreta. Acesso bloqueado.")
