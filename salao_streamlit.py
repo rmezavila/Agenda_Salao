@@ -47,11 +47,10 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "📊 Relatório Financeiro"
 ])
 
-# ===== ABA 1: Clientes (Cadastrar com FORM = LIMPA AUTOMÁTICO) =====
+# ===== ABA 1: Clientes =====
 with aba1:
     st.subheader("Cadastrar Cliente")
 
-    # ✅ FORMULÁRIO — LIMPA TUDO APÓS SALVAR! Não duplica mais!
     with st.form("form_cadastro", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
@@ -114,7 +113,6 @@ with aba2:
     clientes = carregar_dados(ARQUIVO_CLIENTES)
     lista_clientes = [f"{c['nome']} — {c['telefone']}" for c in clientes] if clientes else []
 
-    # ✅ FORMULÁRIO — LIMPA TUDO APÓS CONFIRMAR!
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
@@ -160,7 +158,6 @@ with aba3:
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
 
     if agendamentos:
-        # Lista para selecionar e excluir
         lista_agendamentos = [
             f"{a['data_hora']} | {a['cliente']} | {a['servico']} | R$ {a['valor']:.2f}"
             for a in agendamentos
@@ -181,7 +178,7 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO FINANCEIRO — FORMATO CONTÁBIL =====
+# ===== ABA 4: RELATÓRIO FINANCEIRO — BEM ALINHADO =====
 with aba4:
     st.subheader("💰 Relatório Financeiro")
     st.divider()
@@ -191,7 +188,6 @@ with aba4:
     if not agendamentos:
         st.info("Nenhum agendamento registrado ainda.")
     else:
-        # Função auxiliar para extrair data
         def pegar_data(agendamento):
             if "data" in agendamento:
                 return agendamento["data"]
@@ -199,7 +195,6 @@ with aba4:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
 
-        # FILTRO POR PERÍODO
         st.subheader("📅 Período do Relatório")
         col_data_ini, col_data_fim = st.columns(2)
         with col_data_ini:
@@ -210,7 +205,6 @@ with aba4:
         data_ini_str = data_inicial.strftime("%d/%m/%Y")
         data_fim_str = data_final.strftime("%d/%m/%Y")
 
-        # Filtrar agendamentos dentro do período
         def data_entre(data_ag, d_ini, d_fim):
             try:
                 dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
@@ -223,68 +217,110 @@ with aba4:
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
-        # Calcular totais
         total_valor = sum([a["valor"] for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
 
-        # ✅ RELATÓRIO NO FORMATO CONTÁBIL
-        st.markdown("""
-        <style>
-        .relatorio {
-            font-family: 'Courier New', monospace;
-            background: #fff;
-            color: #000;
-            padding: 2rem;
-            border: 1px solid #ccc;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # ✅ RELATÓRIO COM TABELA BEM ALINHADA E ESPAÇADA
+        html_relatorio = f"""
+<style>
+    @media print {{
+        body {{ background: white; color: black; }}
+        .no-impressao {{ display: none; }}
+    }}
+    .relatorio {{
+        font-family: 'Courier New', Courier, monospace;
+        background: #ffffff;
+        color: #000000;
+        padding: 30px;
+        border: 1px solid #333;
+        max-width: 900px;
+        margin: 0 auto;
+    }}
+    .relatorio h2 {{
+        text-align: center;
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }}
+    .relatorio .subtitulo {{
+        text-align: center;
+        margin: 0 0 20px 0;
+        font-size: 13px;
+    }}
+    .relatorio .linha {{
+        font-size: 13px;
+        padding: 4px 0;
+        border-bottom: 1px dotted #ccc;
+    }}
+    .relatorio .cabecalho {{
+        font-weight: bold;
+        border-bottom: 1px solid #000;
+        padding: 8px 0;
+        margin: 10px 0;
+    }}
+    .relatorio .total {{
+        font-weight: bold;
+        font-size: 15px;
+        border-top: 2px solid #000;
+        padding: 10px 0;
+        margin-top: 10px;
+    }}
+    .relatorio .assinatura {{
+        text-align: right;
+        margin-top: 50px;
+        padding-right: 50px;
+    }}
+    .col-data {{ display: inline-block; width: 110px; }}
+    .col-cli {{ display: inline-block; width: 220px; }}
+    .col-ser {{ display: inline-block; width: 250px; }}
+    .col-val {{ display: inline-block; width: 150px; text-align: right; }}
+</style>
 
-        st.markdown(f"""
-        <div class="relatorio">
+<div class="relatorio">
+    <h2>Salão de Beleza</h2>
+    <p class="subtitulo">Relatório de Movimento Financeiro</p>
+    <hr>
 
-        <h3 style="text-align: center; margin-bottom: 0;">RELATÓRIO FINANCEIRO</h3>
-        <p style="text-align: center; margin-top: 0; font-size: 0.9em;">Salão de Beleza</p>
-        <hr>
+    <p><strong>Período:</strong> {data_ini_str} a {data_fim_str}</p>
+    <p><strong>Data de Emissão:</strong> {datetime.now().strftime("%d/%m/%Y")}</p>
+    <hr style="margin: 15px 0;">
 
-        <p><strong>Período:</strong> {data_ini_str} a {data_fim_str}</p>
-        <p><strong>Data de Emissão:</strong> {datetime.now().strftime("%d/%m/%Y")}</p>
-
-        <hr>
-
-        <table style="width:100%; border-collapse: collapse;">
-        <tr>
-            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Data</th>
-            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Cliente</th>
-            <th style="text-align:left; border-bottom: 1px solid #000; padding: 8px;">Serviço</th>
-            <th style="text-align:right; border-bottom: 1px solid #000; padding: 8px;">Valor R$</th>
-        </tr>
-        """, unsafe_allow_html=True)
+    <div class="cabecalho">
+        <span class="col-data">Data</span>
+        <span class="col-cli">Cliente</span>
+        <span class="col-ser">Serviço</span>
+        <span class="col-val">Valor R$</span>
+    </div>
+"""
 
         for item in lista_filtrada:
-            st.markdown(f"""
-        <tr>
-            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{pegar_data(item)}</td>
-            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{item['cliente']}</td>
-            <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">{item['servico']}</td>
-            <td style="padding: 6px 0; border-bottom: 1px solid #ddd; text-align:right;">{item['valor']:.2f}</td>
-        </tr>
-            """, unsafe_allow_html=True)
+            html_relatorio += f"""
+    <div class="linha">
+        <span class="col-data">{pegar_data(item)}</span>
+        <span class="col-cli">{item['cliente']}</span>
+        <span class="col-ser">{item['servico']}</span>
+        <span class="col-val">{item['valor']:.2f}</span>
+    </div>
+"""
 
-        st.markdown(f"""
-        <tr>
-            <td colspan="3" style="text-align:right; padding: 12px 0 4px 0; font-weight: bold; font-size: 1.1em;">TOTAL GERAL .................</td>
-            <td style="text-align:right; padding: 12px 0 4px 0; font-weight: bold; font-size: 1.1em;">R$ {total_valor:.2f}</td>
-        </tr>
-        </table>
+        html_relatorio += f"""
+    <div class="total">
+        <span class="col-data"></span>
+        <span class="col-cli"></span>
+        <span class="col-ser">TOTAL GERAL</span>
+        <span class="col-val">R$ {total_valor:.2f}</span>
+    </div>
 
-        <hr>
+    <div class="assinatura">
+        ________________________________________<br>
+        Responsável
+    </div>
+</div>
+"""
 
-        <p style="text-align: right; margin-top: 40px;">_______________________________<br>Responsável</p>
-
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(html_relatorio, unsafe_allow_html=True)
 
         st.info("💡 Para imprimir: aperte **Ctrl + P** → o relatório sai formatado em página branca!")
