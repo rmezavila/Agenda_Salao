@@ -45,7 +45,7 @@ aba1, aba2, aba3, aba4 = st.tabs([
     "📋 Clientes",
     "📅 Agendar",
     "📖 Agendamentos",
-    "📊 Relatório Financeiro"
+    "📊 Relatório e Consultas"
 ])
 
 # ===== ABA 1: Clientes =====
@@ -106,15 +106,21 @@ with aba2:
     with st.form("form_agendar", clear_on_submit=True):
         cliente_sel = st.selectbox("Selecione o Cliente", [""] + lista_clientes)
         servico_nome = st.selectbox("Serviço", list(SERVICOS_PADRAO.keys()))
-        valor = st.number_input("Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
+        
+        col_valor, col_custo = st.columns(2)
+        with col_valor:
+            valor = st.number_input("💰 Valor do Serviço (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
+        with col_custo:
+            custo = st.number_input("📦 Custo (R$)", min_value=0.0, value=0.00, step=5.0, format="%.2f")
+
         col1, col2 = st.columns(2)
         with col1:
             data = st.date_input("Data", format="DD/MM/YYYY")
         with col2:
             hora = st.time_input("Hora")
 
-        # ✅ CAMPO NOVO: Status do Agendamento
-        status = st.selectbox("Status", ["Agendado", "✅ Realizado"])
+        # ✅ TRÊS OPÇÕES DE STATUS
+        status = st.selectbox("Status", ["Agendado", "✅ Realizado", "❌ Não Realizado"])
 
         confirmar = st.form_submit_button("✅ Confirmar Agendamento", type="primary")
         if confirmar:
@@ -127,15 +133,17 @@ with aba2:
                     "cliente": nome_cliente,
                     "servico": servico_nome,
                     "valor": round(valor, 2),
+                    "custo": round(custo, 2),
                     "data_hora": data_hora_str,
                     "data": data_str,
-                    "status": status  # ← SALVA O STATUS
+                    "status": status
                 })
                 salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
                 st.success(f"""✅ Agendamento confirmado!
 👤 Cliente: {nome_cliente}
 💇 Serviço: {servico_nome}
 💰 Valor: R$ {valor:.2f}
+📦 Custo: R$ {custo:.2f}
 📅 Data: {data_hora_str}
 📌 Status: {status}""")
             else:
@@ -143,7 +151,7 @@ with aba2:
 
 # ===== ABA 3: Agendamentos + EXCLUIR + ALTERAR STATUS =====
 with aba3:
-    st.subheader("📖 Agendamentos Realizados")
+    st.subheader("📖 Agendamentos")
     st.divider()
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
 
@@ -160,8 +168,9 @@ with aba3:
 
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
-                novo_status = st.selectbox("Alterar Status", ["Agendado", "✅ Realizado"], 
-                                          index=0 if status_atual == "Agendado" else 1)
+                novo_status = st.selectbox("Alterar Status", 
+                    ["Agendado", "✅ Realizado", "❌ Não Realizado"],
+                    index=["Agendado", "✅ Realizado", "❌ Não Realizado"].index(status_atual))
                 if st.button("💾 Salvar Status", type="primary"):
                     agendamentos[indice]["status"] = novo_status
                     salvar_dados(agendamentos, ARQUIVO_AGENDAMENTOS)
@@ -180,9 +189,9 @@ with aba3:
     else:
         st.info("Nenhum agendamento registrado.")
 
-# ===== ABA 4: RELATÓRIO — FILTRA POR STATUS =====
+# ===== ABA 4: RELATÓRIO + CONSULTA DE CLIENTES POR PERÍODO =====
 with aba4:
-    st.subheader("💰 Relatório Financeiro")
+    st.subheader("📊 Relatório e Consultas")
     st.divider()
 
     agendamentos = carregar_dados(ARQUIVO_AGENDAMENTOS)
@@ -197,18 +206,13 @@ with aba4:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
 
-        st.subheader("📅 Período do Relatório")
-        col_data_ini, col_data_fim = st.columns(2)
-        with col_data_ini:
-            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY")
-        with col_data_fim:
-            data_final = st.date_input("Data Final", format="DD/MM/YYYY")
-
-        # ✅ FILTRO POR STATUS
-        filtro_status = st.selectbox("Filtrar por Status", ["Todos", "✅ Realizado", "Agendado"])
-
-        data_ini_str = data_inicial.strftime("%d/%m/%Y")
-        data_fim_str = data_final.strftime("%d/%m/%Y")
+        # 📋 CONSULTA DE CLIENTES ATENDIDOS POR PERÍODO
+        st.subheader("👥 Consultar Clientes Atendidos por Período")
+        col_dt_ini, col_dt_fim = st.columns(2)
+        with col_dt_ini:
+            data_ini_consulta = st.date_input("Data Inicial", format="DD/MM/YYYY", key="consulta_ini")
+        with col_dt_fim:
+            data_fim_consulta = st.date_input("Data Final", format="DD/MM/YYYY", key="consulta_fim")
 
         def data_entre(data_ag, d_ini, d_fim):
             try:
@@ -217,16 +221,66 @@ with aba4:
             except:
                 return False
 
+        dt_ini_cons = datetime.strptime(data_ini_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
+        dt_fim_cons = datetime.strptime(data_fim_consulta.strftime("%d/%m/%Y"), "%d/%m/%Y")
+
+        # Filtra só os REALIZADOS no período
+        realizados = [a for a in agendamentos 
+                     if a.get("status") == "✅ Realizado" 
+                     and data_entre(pegar_data(a), dt_ini_cons, dt_fim_cons)]
+
+        if realizados:
+            st.success(f"✅ {len(realizados)} atendimentos realizados no período")
+            # Lista de clientes únicos
+            clientes_atendidos = sorted(list(set([a["cliente"] for a in realizados])))
+            st.markdown("### 👥 Clientes atendidos:")
+            for nome in clientes_atendidos:
+                qtd = len([a for a in realizados if a["cliente"] == nome])
+                st.markdown(f"- **{nome}** — {qtd} atendimento(s)")
+            
+            st.divider()
+            st.markdown("### 📋 Atendimentos Detalhados:")
+            tabela_realizados = []
+            for item in realizados:
+                tabela_realizados.append({
+                    "Data": pegar_data(item),
+                    "Cliente": item["cliente"],
+                    "Serviço": item["servico"],
+                    "Valor R$": f"{item['valor']:.2f}",
+                    "Custo R$": f"{item.get('custo', 0):.2f}"
+                })
+            st.table(tabela_realizados)
+
+            total_valor = sum([a["valor"] for a in realizados])
+            total_custo = sum([a.get("custo", 0) for a in realizados])
+            st.markdown(f"### 💰 Total Período: R$ {total_valor:.2f} | 📦 Custo Total: R$ {total_custo:.2f} | 🧾 Lucro: R$ {(total_valor - total_custo):.2f}")
+        else:
+            st.info("Nenhum serviço realizado no período selecionado.")
+
+        st.divider()
+        st.subheader("📄 Relatório Financeiro Completo")
+
+        col_data_ini, col_data_fim = st.columns(2)
+        with col_data_ini:
+            data_inicial = st.date_input("Data Inicial", format="DD/MM/YYYY", key="rel_ini")
+        with col_data_fim:
+            data_final = st.date_input("Data Final", format="DD/MM/YYYY", key="rel_fim")
+
+        filtro_status = st.selectbox("Filtrar por Status", ["Todos", "✅ Realizado", "Agendado", "❌ Não Realizado"])
+
+        data_ini_str = data_inicial.strftime("%d/%m/%Y")
+        data_fim_str = data_final.strftime("%d/%m/%Y")
+
         dt_ini = datetime.strptime(data_ini_str, "%d/%m/%Y")
         dt_fim = datetime.strptime(data_fim_str, "%d/%m/%Y")
 
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
 
-        # ✅ APLICA FILTRO DE STATUS
         if filtro_status != "Todos":
             lista_filtrada = [a for a in lista_filtrada if a.get("status", "Agendado") == filtro_status]
 
         total_valor = sum([a["valor"] for a in lista_filtrada])
+        total_custo = sum([a.get("custo", 0) for a in lista_filtrada])
         qtd_servicos = len(lista_filtrada)
 
         st.divider()
@@ -254,7 +308,8 @@ with aba4:
                 "Cliente": item["cliente"],
                 "Serviço": item["servico"],
                 "Status": item.get("status", "Agendado"),
-                "Valor R$": f"{item['valor']:.2f}"
+                "Valor R$": f"{item['valor']:.2f}",
+                "Custo R$": f"{item.get('custo', 0):.2f}"
             })
 
         st.table(tabela_dados)
@@ -262,7 +317,9 @@ with aba4:
         st.divider()
 
         st.markdown(f"""
-        <h3 style='text-align: right; padding-right: 20px;'>TOTAL GERAL: R$ {total_valor:.2f}</h3>
+        <h3 style='text-align: right; padding-right: 20px;'>
+        Valor: R$ {total_valor:.2f} | Custo: R$ {total_custo:.2f} | LUCRO: R$ {(total_valor - total_custo):.2f}
+        </h3>
         """, unsafe_allow_html=True)
 
         st.divider()
