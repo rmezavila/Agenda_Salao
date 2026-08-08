@@ -4,8 +4,10 @@ from datetime import datetime
 import os
 
 # ==============================================
-# 🔒 CONTROLE DE ACESSO — DESATIVADO AGORA
+# 🔒 CONTROLE DE LICENÇA / MENSALIDADE DO SALÃO
 # ==============================================
+LICENCA_ATIVA = True
+
 st.set_page_config(
     page_title="Salão Abelhinha",
     page_icon="🐝",
@@ -13,22 +15,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ✅ PARA ATIVAR A SENHA: TIRE O # DAS LINHAS ABAIXO
-# st.title("🔒 Acesso Restrito")
-# senha_digitada = st.text_input("Digite a senha de acesso:", type="password")
-# SENHA_CORRETA = "Salao2026"
-# if SENHA_CORRETA != "" and senha_digitada != SENHA_CORRETA:
-#     st.stop()
+# 🙈 Oculta o menu padrão, cabeçalho e botão Manage app
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    [data-testid="stHeader"] {visibility: hidden;}
+    [data-testid="stAppViewBlockContainer"] {padding-top: 2rem;}
+    </style>
+""", unsafe_allow_html=True)
 
-# ✅ PARA DESATIVAR NOVAMENTE: COLOQUE # NAS LINHAS ACIMA
-
-st.divider()
+# Trava de licença suspensa
+if not LICENCA_ATIVA:
+    st.error("⚠️ Licença suspensa por pendência de pagamento.")
+    st.info("Entre em contato com o suporte para reativar o acesso ao sistema.")
+    st.stop()
 
 # ✅ DATA DE HOJE — VALE PARA TODAS AS PÁGINAS
 hoje = datetime.today().date()
 
-# ---------- RESTO DO SISTEMA TOTALMENTE NORMAL ----------
-st.sidebar.image("logo.jpg", width=400)
+# ---------- MENU LATERAL ----------
+if os.path.exists("logo.jpg"):
+    st.sidebar.image("logo.jpg", width=400)
+
 st.sidebar.title("💄 Salão Abelhinha")
 st.sidebar.divider()
 
@@ -58,8 +68,11 @@ SERVICOS_PADRAO = {
 def carregar_dados(arquivo):
     if not os.path.exists(arquivo):
         return []
-    with open(arquivo, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with open(arquivo, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return []
 
 def salvar_dados(dados, arquivo):
     with open(arquivo, "w", encoding="utf-8") as f:
@@ -67,40 +80,79 @@ def salvar_dados(dados, arquivo):
 
 # ---------- PÁGINA 1: CLIENTES ----------
 if pagina == "👥 Clientes":
-    st.title("👥 Clientes")
+    st.title("👥 Gestão de Clientes")
     st.divider()
+
+    clientes = carregar_dados(ARQUIVO_CLIENTES)
+
+    # 🎂 ALERTA DE ANIVERSARIANTES DO DIA
+    if clientes:
+        hoje_dia_mes = hoje.strftime("%d/%m")
+        aniversariantes = [
+            c for c in clientes 
+            if c.get("nascimento") and c["nascimento"].startswith(hoje_dia_mes)
+        ]
+        if aniversariantes:
+            st.balloon()
+            st.success(f"🎉 **Aniversariantes de Hoje ({hoje_dia_mes})!** Não esqueça de mandar parabéns:")
+            for niversaria in aniversariantes:
+                st.markdown(f"- 🎂 **{niversaria['nome']}** — WhatsApp: `{niversaria['telefone']}`")
+            st.divider()
+
     st.subheader("Cadastrar Cliente")
     with st.form("form_cadastro", clear_on_submit=True):
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
             nome = st.text_input("Nome Completo")
         with col2:
-            telefone = st.text_input("Telefone")
+            telefone = st.text_input("Telefone / WhatsApp")
+        with col3:
+            data_nasc = st.date_input("Data de Nascimento", format="DD/MM/YYYY")
+
         cadastrar = st.form_submit_button("✅ Cadastrar", type="primary")
         if cadastrar:
             if nome and telefone:
-                clientes = carregar_dados(ARQUIVO_CLIENTES)
-                clientes.append({"nome": nome, "telefone": telefone})
+                nasc_str = data_nasc.strftime("%d/%m/%Y")
+                clientes.append({
+                    "nome": nome, 
+                    "telefone": telefone,
+                    "nascimento": nasc_str
+                })
                 salvar_dados(clientes, ARQUIVO_CLIENTES)
                 st.success(f"✅ Cliente **{nome}** cadastrado com sucesso!")
+                st.rerun()
             else:
                 st.warning("⚠️ Preencha Nome e Telefone!")
+
     st.divider()
     st.subheader("Editar / Excluir Cliente")
-    clientes = carregar_dados(ARQUIVO_CLIENTES)
     if clientes:
         lista_nomes = [f"{c['nome']} — {c['telefone']}" for c in clientes]
         escolha = st.selectbox("Cliente para Editar/Excluir", [""] + lista_nomes)
+        
         if escolha:
-            indice = lista_nomes.index(escolha)
+            indice = lista_nomes.index(escolha) - 1
             cliente_atual = clientes[indice]
-            novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"])
-            novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"])
+            
+            col_edit1, col_edit2 = st.columns(2)
+            with col_edit1:
+                novo_nome = st.text_input("Novo Nome", value=cliente_atual["nome"])
+            with col_edit2:
+                novo_telefone = st.text_input("Novo Telefone", value=cliente_atual["telefone"])
+            
+            try:
+                dt_obj = datetime.strptime(cliente_atual.get("nascimento", "01/01/2000"), "%d/%m/%Y").date()
+            except:
+                dt_obj = hoje
+
+            nova_data_nasc = st.date_input("Nova Data de Nascimento", value=dt_obj, format="DD/MM/YYYY")
+
             col_editar, col_excluir = st.columns(2)
             with col_editar:
                 if st.button("✏️ Salvar Alterações", type="primary"):
                     clientes[indice]["nome"] = novo_nome
                     clientes[indice]["telefone"] = novo_telefone
+                    clientes[indice]["nascimento"] = nova_data_nasc.strftime("%d/%m/%Y")
                     salvar_dados(clientes, ARQUIVO_CLIENTES)
                     st.success("✅ Cliente atualizado!")
                     st.rerun()
@@ -112,9 +164,11 @@ if pagina == "👥 Clientes":
                     st.rerun()
     else:
         st.info("Nenhum cliente cadastrado.")
+
     st.divider()
     st.subheader("Lista de Clientes")
-    st.table(clientes)
+    if clientes:
+        st.table(clientes)
 
 # ---------- PÁGINA 2: AGENDAR ----------
 elif pagina == "📅 Agendar":
@@ -172,7 +226,7 @@ elif pagina == "📖 Agendamentos":
         ]
         escolha_ag = st.selectbox("Selecione para Alterar Status ou Excluir", [""] + lista_agendamentos)
         if escolha_ag:
-            indice = lista_agendamentos.index(escolha_ag)
+            indice = lista_agendamentos.index(escolha_ag) - 1
             status_atual = agendamentos[indice].get("status", "Agendado")
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
@@ -220,12 +274,14 @@ elif pagina == "📊 Relatório e Consultas":
             elif "data_hora" in agendamento:
                 return agendamento["data_hora"].split(" ")[0]
             return "Sem data"
+
         def data_entre(data_ag, d_ini, d_fim):
             try:
                 dt_ag = datetime.strptime(data_ag, "%d/%m/%Y")
                 return d_ini <= dt_ag <= d_fim
             except:
                 return False
+
         st.subheader("👥 Consultar Clientes Atendidos por Período")
         col_dt_ini, col_dt_fim = st.columns(2)
         with col_dt_ini:
@@ -257,10 +313,8 @@ elif pagina == "📊 Relatório e Consultas":
         with col_data_fim:
             data_final = st.date_input("📅 Data Final", value=hoje, format="DD/MM/YYYY", key="rel_fim")
         filtro_status = st.selectbox("📌 Filtrar por Status", ["✅ Realizado", "Agendado", "Todos"])
-        data_ini_str = data_inicial.strftime("%d/%m/%Y")
-        data_fim_str = data_final.strftime("%d/%m/%Y")
-        dt_ini = datetime.strptime(data_ini_str, "%d/%m/%Y")
-        dt_fim = datetime.strptime(data_fim_str, "%d/%m/%Y")
+        dt_ini = datetime.strptime(data_inicial.strftime("%d/%m/%Y"), "%d/%m/%Y")
+        dt_fim = datetime.strptime(data_final.strftime("%d/%m/%Y"), "%d/%m/%Y")
         lista_filtrada = [a for a in agendamentos if data_entre(pegar_data(a), dt_ini, dt_fim)]
         lista_filtrada = [a for a in lista_filtrada if a.get("status") != "❌ Não Realizado"]
         if filtro_status != "Todos":
@@ -296,7 +350,6 @@ elif pagina == "📊 Relatório e Consultas":
         </div>
         """, unsafe_allow_html=True)
         st.divider()
-        st.markdown("&nbsp;")
         st.markdown("&nbsp;")
         st.markdown("""
         <p style='text-align: right; padding-right: 40px; margin-top: 60px;'>
