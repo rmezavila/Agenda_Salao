@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 from datetime import datetime
-import osp
+import os
 
 # ==============================================
 # 🔒 CONTROLE DE LICENÇA / MENSALIDADE DO SALÃO
@@ -79,8 +79,6 @@ def salvar_dados(dados, arquivo):
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
 # ---------- PÁGINA 1: CLIENTES ----------
-
-   # ---------- PÁGINA 1: CLIENTES ----------
 if pagina == "👥 Clientes":
     st.title("👥 Gestão de Clientes")
     st.divider()
@@ -95,7 +93,7 @@ if pagina == "👥 Clientes":
             if c.get("nascimento") and c["nascimento"].startswith(hoje_dia_mes)
         ]
         if aniversariantes:
-            st.balloons()  # ✅ Corrigido para o plural
+            st.balloons()
             st.success(f"🎉 **Aniversariantes de Hoje ({hoje_dia_mes})!** Não esqueça de mandar parabéns:")
             for niversaria in aniversariantes:
                 st.markdown(f"- 🎂 **{niversaria['nome']}** — WhatsApp: `{niversaria['telefone']}`")
@@ -171,11 +169,9 @@ if pagina == "👥 Clientes":
     st.subheader("Lista de Clientes")
     if clientes:
         st.table(clientes)
- 
-    
 
 # ---------- PÁGINA 2: AGENDAR ----------
-elif pagina == "📅 Agendar"
+elif pagina == "📅 Agendar":
     data_texto = hoje.strftime("%d/%m/%Y")
     st.markdown(f"# 📅 Novo Agendamento — Hoje: {data_texto}")
     st.divider()
